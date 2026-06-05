@@ -87,12 +87,12 @@ kotlin {
 
 sqldelight {
     databases {
-        create("NoteDatabase") {
+        create("NotesDatabase") {
             packageName.set("com.notewriterkmp.db")
         }
     }
 }
-
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
 }
+

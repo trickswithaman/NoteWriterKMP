@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.notewriterkmp.db.NoteEntity
 import org.jetbrains.compose.resources.painterResource
 
 import notewriterkmp.shared.generated.resources.Res
@@ -24,6 +25,8 @@ import notewriterkmp.shared.generated.resources.compose_multiplatform
 fun App() {
     MaterialTheme {
         var showContent by remember { mutableStateOf(false) }
+
+        
         Column(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.primaryContainer)

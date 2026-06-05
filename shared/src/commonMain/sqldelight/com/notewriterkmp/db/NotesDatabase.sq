@@ -1,0 +1,21 @@
+import kotlin.Boolean;
+
+CREATE TABLE NoteEntity(
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT,
+    content TEXT,
+    isPinned INTEGER AS Boolean NOT NULL DEFAULT 0,
+    createdAt INTEGER NOT NULL
+);
+
+
+
+selectAll:
+SELECT * FROM NoteEntity ORDER BY createdAt DESC;
+
+insertNote:
+INSERT OR REPLACE INTO NoteEntity(id, title, content, isPinned, createdAt)
+VALUES (?, ?, ?, ?, ?);
+
+deleteNote:
+DELETE FROM NoteEntity WHERE id = ?;
