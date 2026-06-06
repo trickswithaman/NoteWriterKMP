@@ -11,6 +11,10 @@ class AddNoteUseCase(private val repo: NotesRepository) {
     suspend operator fun invoke(note: NoteEntity) = repo.insertNote(note)
 }
 
+class UpdateNoteUseCase(private val repo: NotesRepository){
+    suspend operator fun invoke(note: NoteEntity) = repo.updateNote(note)
+}
+
 class DeleteNoteUseCase(private val repo: NotesRepository) {
     suspend operator fun invoke(id: String) = repo.deleteNote(id)
 }

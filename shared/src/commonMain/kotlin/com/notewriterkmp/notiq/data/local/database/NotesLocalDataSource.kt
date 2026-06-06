@@ -17,9 +17,27 @@ class NotesLocalDataSource(
         title: String?,
         content: String?,
         isPinned: Boolean,
-        createdAt: Long
+        createdAt: Long,
+        updatedAt: Long
     ) {
-        queries.insertNote(id, title, content, isPinned, createdAt)
+        queries.insertNote(id, title, content, isPinned, createdAt,updatedAt)
+    }
+
+    fun updateNote(
+        id: String,
+        title: String?,
+        content: String?,
+        isPinned: Boolean,
+        updatedAt: Long
+    ) {
+        queries.updateNote(
+            id = id ,
+            title = title,
+            content = content,
+            isPinned = isPinned,
+            updatedAt = updatedAt,
+
+        )
     }
 
     fun deleteNote(id: String) {

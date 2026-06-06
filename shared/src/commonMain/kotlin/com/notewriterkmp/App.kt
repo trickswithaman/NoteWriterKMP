@@ -1,6 +1,7 @@
 package com.notewriterkmp
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,22 +32,40 @@ fun App() {
     MaterialTheme {
         val viewModel = koinViewModel<NotesListViewModel>()
 
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-           NotesListScreen(
-               viewModel = viewModel
-           )
+        var selectedNote by remember { mutableStateOf<NoteEntity?>(null) }
+        var isEditorOpen by remember { mutableStateOf(false) }
+
+        if (isEditorOpen) {
+            NoteEditorScreen(
+                note = selectedNote,
+                viewModel = viewModel,
+                onBack = {
+                    isEditorOpen = false
+                    selectedNote = null
+                }
+            )
+        } else {
+            NotesListScreen(
+                viewModel = viewModel,
+                onEdit = { note ->
+                    selectedNote = note
+                    isEditorOpen = true
+                },
+                onAdd = {
+                    selectedNote = null
+                    isEditorOpen = true
+                }
+            )
         }
     }
 }
 
 @Composable
-fun NotesListScreen(viewModel: NotesListViewModel) {
+fun NotesListScreen(
+    viewModel: NotesListViewModel,
+    onEdit: (NoteEntity) -> Unit,
+    onAdd: () -> Unit
+) {
 
     val notes by viewModel.notes.collectAsState()
 
@@ -55,38 +74,42 @@ fun NotesListScreen(viewModel: NotesListViewModel) {
     }
 
     Column {
-        var title by remember { mutableStateOf("") }
 
-        TextField(
-            value = title,
-            onValueChange = { title = it }
-        )
-
-        Button(onClick = {
-            viewModel.addNote(title)
-        }) {
-            Text("Save")
+        Button(onClick = { onAdd() }) {
+            Text("Add Note")
         }
 
         LazyColumn {
             items(notes) { note ->
-                NoteItem(note)
+
+                NoteItem(
+                    note = note,
+                    onEditNote = {
+                        onEdit(note)   // ✅ FIXED
+                    }
+                )
+
                 Button(
                     onClick = {
-                        viewModel.deleteNote(id = note.id)
+                        viewModel.deleteNote(note.id)
                     }
-                ){
-                    Text("delete ${note.title}")
+                ) {
+                    Text("Delete ${note.title}")
                 }
             }
         }
     }
 }
 @Composable
-fun NoteItem(note: NoteEntity) {
+fun NoteItem(note: NoteEntity, onEditNote : () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(
+                onClick = {
+                    onEditNote()
+                }
+            )
             .padding(8.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
@@ -100,6 +123,30 @@ fun NoteItem(note: NoteEntity) {
                 text = note.content ?: "",
                 style = MaterialTheme.typography.bodyMedium
             )
+        }
+    }
+}
+
+@Composable
+fun NoteEditorScreen(
+    note: NoteEntity?,
+    viewModel: NotesListViewModel ,
+    onBack: () -> Unit
+) {
+
+    var title by remember { mutableStateOf(note?.title ?: "") }
+    var content by remember { mutableStateOf(note?.content ?: "") }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+
+        TextField(value = title, onValueChange = { title = it })
+        TextField(value = content, onValueChange = { content = it })
+
+        Button(onClick = {
+            viewModel.saveNote(note, title, content)
+            onBack()
+        }) {
+            Text(if (note != null) "Update" else "Save")
         }
     }
 }

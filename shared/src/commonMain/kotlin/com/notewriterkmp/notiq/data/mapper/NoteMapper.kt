@@ -9,6 +9,7 @@ fun NoteEntity.toDomain(): NoteEntity {
         title = title,
         content = content,
         isPinned = isPinned,
-        createdAt = createdAt
+        createdAt = createdAt,
+        updatedAt = updatedAt
     )
 }

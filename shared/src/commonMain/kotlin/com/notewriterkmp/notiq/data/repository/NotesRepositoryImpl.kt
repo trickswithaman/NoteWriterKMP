@@ -14,13 +14,25 @@ class NotesRepositoryImpl(
         return local.getNotes().map { it.toDomain() }
     }
 
+    override suspend fun updateNote(note: NoteEntity) {
+        local.updateNote(
+            id = note.id,
+            title = note.title,
+            content = note.content,
+            updatedAt = note.updatedAt,
+            isPinned = note.isPinned
+        )
+    }
+
+
     override suspend fun insertNote(note: NoteEntity) {
         local.insertNote(
             id = note.id,
             title = note.title,
             content = note.content,
             isPinned = note.isPinned,
-            createdAt = note.createdAt
+            createdAt = note.createdAt,
+            updatedAt = note.updatedAt
         )
     }
 

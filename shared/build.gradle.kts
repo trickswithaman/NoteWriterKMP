@@ -67,6 +67,8 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
 
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
+
             // Navigation
             implementation(libs.navigation.compose)
 

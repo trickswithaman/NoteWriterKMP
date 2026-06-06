@@ -5,7 +5,8 @@ CREATE TABLE NoteEntity(
     title TEXT,
     content TEXT,
     isPinned INTEGER AS Boolean NOT NULL DEFAULT 0,
-    createdAt INTEGER NOT NULL
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
 );
 
 
@@ -14,8 +15,15 @@ selectAll:
 SELECT * FROM NoteEntity ORDER BY createdAt DESC;
 
 insertNote:
-INSERT OR REPLACE INTO NoteEntity(id, title, content, isPinned, createdAt)
-VALUES (?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO NoteEntity(
+    id, title, content, isPinned, createdAt, updatedAt
+)
+VALUES (?, ?, ?, ?, ?, ?);
 
 deleteNote:
 DELETE FROM NoteEntity WHERE id = ?;
+
+updateNote:
+UPDATE NoteEntity
+SET title = ?, content = ?, isPinned = ?, updatedAt = ?
+WHERE id = ?;

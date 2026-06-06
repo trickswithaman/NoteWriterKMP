@@ -7,6 +7,7 @@ import com.notewriterkmp.notiq.domain.repository.NotesRepository
 import com.notewriterkmp.notiq.domain.usecase.AddNoteUseCase
 import com.notewriterkmp.notiq.domain.usecase.DeleteNoteUseCase
 import com.notewriterkmp.notiq.domain.usecase.GetNotesUseCase
+import com.notewriterkmp.notiq.domain.usecase.UpdateNoteUseCase
 import com.notewriterkmp.notiq.presentation.NotesListViewModel
 import org.koin.core.module.Module
 
@@ -26,12 +27,14 @@ val appModule = module {
     factory { GetNotesUseCase(get()) }
     factory { AddNoteUseCase(get()) }
     factory { DeleteNoteUseCase(get()) }
+    factory { UpdateNoteUseCase(get()) }
 
     factory {
         NotesListViewModel(
             getNotes = get(),
             addNoteUseCase = get(),
-            deleteNoteUseCase = get()
+            deleteNoteUseCase = get(),
+            updateNoteUseCase = get()
         )
     }
 
