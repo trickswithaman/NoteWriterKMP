@@ -65,6 +65,7 @@ kotlin {
 
             // Serialization
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
 
             // Navigation
             implementation(libs.navigation.compose)

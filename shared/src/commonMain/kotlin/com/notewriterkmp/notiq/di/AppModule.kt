@@ -4,6 +4,10 @@ import org.koin.dsl.module
 import com.notewriterkmp.notiq.data.local.database.NotesLocalDataSource
 import com.notewriterkmp.notiq.data.repository.NotesRepositoryImpl
 import com.notewriterkmp.notiq.domain.repository.NotesRepository
+import com.notewriterkmp.notiq.domain.usecase.AddNoteUseCase
+import com.notewriterkmp.notiq.domain.usecase.DeleteNoteUseCase
+import com.notewriterkmp.notiq.domain.usecase.GetNotesUseCase
+import com.notewriterkmp.notiq.presentation.NotesListViewModel
 import org.koin.core.module.Module
 
 val appModule = module {
@@ -16,6 +20,19 @@ val appModule = module {
     // 🔹 Repository
     single<NotesRepository> {
         NotesRepositoryImpl(get())
+    }
+
+    // 🔹 Use Cases
+    factory { GetNotesUseCase(get()) }
+    factory { AddNoteUseCase(get()) }
+    factory { DeleteNoteUseCase(get()) }
+
+    factory {
+        NotesListViewModel(
+            getNotes = get(),
+            addNoteUseCase = get(),
+            deleteNoteUseCase = get()
+        )
     }
 
 }
