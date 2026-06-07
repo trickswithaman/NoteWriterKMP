@@ -10,6 +10,7 @@ import com.notewriterkmp.notiq.domain.usecase.UpdateNoteUseCase
 import com.notewriterkmp.notiq.notiq.util.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 
@@ -24,10 +25,25 @@ class NotesListViewModel(
     private val _notes = MutableStateFlow<List<NoteEntity>>(emptyList())
     val notes: StateFlow<List<NoteEntity>> = _notes
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
+
+    private var allNotes: List<NoteEntity> = emptyList()
+
     fun loadNotes() {
         viewModelScope.launch {
-            _notes.value = getNotes()
+            allNotes = getNotes()
+            applyFilter()
         }
+    }
+
+    fun onSearch(query: String) {
+        _searchQuery.value = query
+        applyFilter()
+    }
+
+    private fun applyFilter() {
+        _notes.value = getNotes.search(allNotes, _searchQuery.value)
     }
     val currentTime = Clock.System.now().toEpochMilliseconds()
     fun addNote(title: String) {

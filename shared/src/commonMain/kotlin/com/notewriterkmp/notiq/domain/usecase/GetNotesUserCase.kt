@@ -5,6 +5,34 @@ import com.notewriterkmp.notiq.domain.repository.NotesRepository
 
 class GetNotesUseCase(private val repo: NotesRepository) {
     suspend operator fun invoke() = repo.getNotes()
+    fun search(
+        notes: List<NoteEntity>,
+        query: String
+    ): List<NoteEntity> {
+
+        if (query.isBlank()) return notes
+
+        return notes.filter {
+            it.title?.contains(query, ignoreCase = true) == true ||
+                    it.content?.contains(query, ignoreCase = true) == true
+        }
+    }
+
+}
+class SearchNotesUseCase {
+
+    operator fun invoke(
+        notes: List<NoteEntity>,
+        query: String
+    ): List<NoteEntity> {
+
+        if (query.isBlank()) return notes
+
+        return notes.filter {
+            it.title?.contains(query, ignoreCase = true) == true ||
+                    it.content?.contains(query, ignoreCase = true) == true
+        }
+    }
 }
 
 class AddNoteUseCase(private val repo: NotesRepository) {

@@ -2,7 +2,6 @@ package com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -45,7 +44,7 @@ fun NotesListScreen(
             items(notes) { note ->
 
                 NoteItem(
-                    note = note,
+                    note =  note,
                     onEditNote = {
                         onEdit(note)   // ✅ FIXED
                     }
@@ -79,11 +78,6 @@ fun NoteItem(note: NoteEntity, onEditNote : () -> Unit) {
             Text(
                 text = note.title ?: "No Title",
                 style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = note.content ?: "",
-                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
