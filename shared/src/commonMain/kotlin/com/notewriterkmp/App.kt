@@ -2,14 +2,8 @@ package com.notewriterkmp
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
-import com.notewriterkmp.db.NoteEntity
-import com.notewriterkmp.notiq.notiq.presentation.NoteEditAndCreateScreen.NoteEditorScreen
-import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
+import com.notewriterkmp.notiq.notiq.navigation.MainNavigation
 import com.notewriterkmp.notiq.notiq.presentation.NotesListViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -19,10 +13,10 @@ fun App() {
     MaterialTheme {
         val viewModel = koinViewModel<NotesListViewModel>()
 
-        var selectedNote by remember { mutableStateOf<NoteEntity?>(null) }
-        var isEditorOpen by remember { mutableStateOf(false) }
-
-        if (isEditorOpen) {
+        MainNavigation(
+            viewModel
+        )
+        /*if (isEditorOpen) {
             NoteEditorScreen(
                 note = selectedNote, viewModel = viewModel, onBack = {
                     isEditorOpen = false
@@ -36,6 +30,6 @@ fun App() {
                 selectedNote = null
                 isEditorOpen = true
             })
-        }
+        }*/
     }
 }

@@ -8,15 +8,26 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
+
+
 
 @Composable
-fun SplashScreen() {
+fun SplashScreen(navigateTO : () -> Unit ) {
+
+    LaunchedEffect(Unit){
+        delay(3000.milliseconds)
+        navigateTO()
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -81,6 +92,7 @@ fun SplashScreen() {
         }
 
         // Bottom section
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -88,19 +100,15 @@ fun SplashScreen() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Custom Progress indicator (static for now)
-            Box(
+
+            LinearProgressIndicator(
                 modifier = Modifier
-                    .width(48.dp)
-                    .height(3.dp)
-                    .background(Color(0xFFE5E5EA), RoundedCornerShape(2.dp))
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(24.dp)
-                        .background(Color(0xFF6B72FF), RoundedCornerShape(2.dp))
+                    .width(50.dp)
+                    .height(4.dp),
+                trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                color = Color(0xFF6B72FF),
+
                 )
-            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -122,4 +130,10 @@ fun SplashScreen() {
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun SplashP(){
+    SplashScreen(navigateTO = {})
 }
