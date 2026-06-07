@@ -1,4 +1,4 @@
-package com.notewriterkmp.notiq.util
+package com.notewriterkmp.notiq.notiq.util
 
 import java.util.UUID
 

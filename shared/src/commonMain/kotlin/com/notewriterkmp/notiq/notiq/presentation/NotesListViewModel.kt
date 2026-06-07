@@ -1,4 +1,4 @@
-package com.notewriterkmp.notiq.presentation
+package com.notewriterkmp.notiq.notiq.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,7 +7,7 @@ import com.notewriterkmp.notiq.domain.usecase.AddNoteUseCase
 import com.notewriterkmp.notiq.domain.usecase.DeleteNoteUseCase
 import com.notewriterkmp.notiq.domain.usecase.GetNotesUseCase
 import com.notewriterkmp.notiq.domain.usecase.UpdateNoteUseCase
-import com.notewriterkmp.notiq.util.randomUUID
+import com.notewriterkmp.notiq.notiq.util.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

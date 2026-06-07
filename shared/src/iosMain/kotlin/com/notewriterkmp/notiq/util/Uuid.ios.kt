@@ -1,4 +1,5 @@
-package com.notewriterkmp.notiq.util
+package com.notewriterkmp.notiq.notiq.util
+
 
 import platform.Foundation.NSUUID
 

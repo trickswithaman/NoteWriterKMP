@@ -8,7 +8,7 @@ import com.notewriterkmp.notiq.domain.usecase.AddNoteUseCase
 import com.notewriterkmp.notiq.domain.usecase.DeleteNoteUseCase
 import com.notewriterkmp.notiq.domain.usecase.GetNotesUseCase
 import com.notewriterkmp.notiq.domain.usecase.UpdateNoteUseCase
-import com.notewriterkmp.notiq.presentation.NotesListViewModel
+import com.notewriterkmp.notiq.notiq.presentation.NotesListViewModel
 import org.koin.core.module.Module
 
 val appModule = module {

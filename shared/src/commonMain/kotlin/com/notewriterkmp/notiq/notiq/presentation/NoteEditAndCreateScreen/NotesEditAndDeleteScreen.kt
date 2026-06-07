@@ -1,4 +1,4 @@
-package com.notewriterkmp.notiq.presentation.NoteEditAndCreateScreen
+package com.notewriterkmp.notiq.notiq.presentation.NoteEditAndCreateScreen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -13,7 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.notewriterkmp.db.NoteEntity
-import com.notewriterkmp.notiq.presentation.NotesListViewModel
+import com.notewriterkmp.notiq.notiq.presentation.NotesListViewModel
 
 
 @Composable

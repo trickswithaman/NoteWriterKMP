@@ -8,9 +8,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import com.notewriterkmp.db.NoteEntity
-import com.notewriterkmp.notiq.presentation.NoteEditAndCreateScreen.NoteEditorScreen
-import com.notewriterkmp.notiq.presentation.NoteLIstScreen.NotesListScreen
-import com.notewriterkmp.notiq.presentation.NotesListViewModel
+import com.notewriterkmp.notiq.notiq.presentation.NoteEditAndCreateScreen.NoteEditorScreen
+import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
+import com.notewriterkmp.notiq.notiq.presentation.NotesListViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -39,4 +39,3 @@ fun App() {
         }
     }
 }
-
