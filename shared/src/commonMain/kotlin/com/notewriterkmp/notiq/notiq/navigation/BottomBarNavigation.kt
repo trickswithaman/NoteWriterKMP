@@ -216,9 +216,6 @@ fun BottomNavigation(
                         onEdit = { note ->
                             onNoteSelected(note)
                             navController.navigate(Screen.NoteDetailsScreen.route)
-                        }, onAdd = {
-                            onNoteSelected(null)
-                            navController.navigate(Screen.AddNoteScreen.route)
                         }
 
                     )

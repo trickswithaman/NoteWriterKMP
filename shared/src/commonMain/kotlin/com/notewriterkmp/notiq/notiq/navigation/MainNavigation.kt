@@ -61,9 +61,6 @@ fun MainNavigation(
                 onEdit = { note ->
                     selectedNote = note
                     navController.navigate(Screen.NoteDetailsScreen.route)
-                }, onAdd = {
-                    selectedNote = null
-                    navController.navigate(Screen.AddNoteScreen.route)
                 }
 
             )

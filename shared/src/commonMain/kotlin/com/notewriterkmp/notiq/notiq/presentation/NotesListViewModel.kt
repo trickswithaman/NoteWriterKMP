@@ -45,22 +45,8 @@ class NotesListViewModel(
     private fun applyFilter() {
         _notes.value = getNotes.search(allNotes, _searchQuery.value)
     }
+
     val currentTime = Clock.System.now().toEpochMilliseconds()
-    fun addNote(title: String) {
-        viewModelScope.launch {
-            addNoteUseCase(
-                NoteEntity(
-                    id = randomUUID(),
-                    title = title,
-                    content = "",
-                    isPinned = false,
-                    createdAt = currentTime,
-                    updatedAt = currentTime
-                )
-            )
-            loadNotes()
-        }
-    }
 
     fun saveNote(
         existingNote: NoteEntity?,
@@ -81,7 +67,7 @@ class NotesListViewModel(
             )
 
             if (existingNote == null) {
-                addNote(note.toString())
+                addNoteUseCase(note)
             } else {
                 updateNoteUseCase(note)
             }
