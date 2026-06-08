@@ -1,7 +1,6 @@
 package com.notewriterkmp.notiq.notiq.navigation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,52 +14,36 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Preview
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.navigation.Screens.Screen
-import com.notewriterkmp.notiq.notiq.presentation.NoteEditAndCreateScreen.NoteEditorScreen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
 import com.notewriterkmp.notiq.notiq.presentation.NotesListViewModel
-import notewriterkmp.shared.generated.resources.Res
-import notewriterkmp.shared.generated.resources.ic_logo
-import notewriterkmp.shared.generated.resources.ic_top
-import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,16 +51,13 @@ fun BottomNavigation(
     viewModel: NotesListViewModel,
     navController: NavHostController,
     onNoteSelected: (NoteEntity?) -> Unit
-){
-    var search by rememberSaveable{
-        mutableStateOf("")
-    }
-
+) {
+    val search by viewModel.searchQuery.collectAsState()
 
 
     val interactionSource = remember { MutableInteractionSource() }
 
-    Scaffold (
+    Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
@@ -85,7 +65,7 @@ fun BottomNavigation(
                     navController.navigate(Screen.AddNoteScreen.route)
                 },
                 modifier = Modifier.size(50.dp)
-            ){
+            ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     null,
@@ -103,8 +83,8 @@ fun BottomNavigation(
                 title = {
                     BasicTextField(
                         value = search,
-                        onValueChange = {
-                            viewModel.onSearch(it)
+                        onValueChange = { newValue ->
+                            viewModel.onSearch(newValue)
                         },
                         textStyle = TextStyle(
                             fontSize = 16.sp,
@@ -200,17 +180,17 @@ fun BottomNavigation(
         bottomBar = {
 
         }
-    ){ paddingValues ->
+    ) { paddingValues ->
         Box(
             modifier = Modifier.fillMaxSize()
                 .padding(paddingValues)
-        ){
+        ) {
             NavHost(
                 modifier = Modifier.padding(15.dp),
                 navController = rememberNavController(),
                 startDestination = Screen.NoteListScren.route,
-            ){
-                composable(route = Screen.NoteListScren.route){
+            ) {
+                composable(route = Screen.NoteListScren.route) {
                     NotesListScreen(
                         viewModel = viewModel,
                         onEdit = { note ->
