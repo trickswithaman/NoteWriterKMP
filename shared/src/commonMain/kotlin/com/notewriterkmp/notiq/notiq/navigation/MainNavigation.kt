@@ -14,7 +14,7 @@ import androidx.navigation.navArgument
 import com.notewriterkmp.notiq.notiq.navigation.Screens.Screen
 import com.notewriterkmp.notiq.notiq.presentation.NoteEditAndCreateScreen.NoteEditorScreen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
-import com.notewriterkmp.notiq.notiq.presentation.NotesListViewModel
+import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
 import com.notewriterkmp.notiq.notiq.presentation.SplashScreen.SplashScreen
 
 @Composable

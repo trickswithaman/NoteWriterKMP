@@ -66,6 +66,7 @@ kotlin {
             // Serialization
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
 
             implementation("org.jetbrains.androidx.core:core-bundle:1.1.0-alpha03")
             // Navigation

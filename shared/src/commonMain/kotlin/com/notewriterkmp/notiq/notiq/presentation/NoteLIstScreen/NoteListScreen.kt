@@ -26,7 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.notewriterkmp.db.NoteEntity
-import com.notewriterkmp.notiq.notiq.presentation.NotesListViewModel
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 @Composable
 fun NotesListScreen(
@@ -77,6 +79,11 @@ fun NoteItem(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)
             )
+            Text(
+                text = formatDate(note.createdAt) ,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
             IconButton(onClick = onDeleteNote) {
                 Icon(
                     imageVector = Icons.Default.Delete,
@@ -85,5 +92,15 @@ fun NoteItem(
                 )
             }
         }
+
     }
+}
+
+fun formatDate(timestamp: Long): String {
+    val instant = Instant.fromEpochMilliseconds(timestamp)
+    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+
+    return "${localDateTime.dayOfMonth.toString().padStart(2, '0')}-" +
+            "${localDateTime.monthNumber.toString().padStart(2, '0')}-" +
+            "${localDateTime.year}"
 }

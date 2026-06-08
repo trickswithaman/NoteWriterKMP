@@ -1,4 +1,4 @@
-package com.notewriterkmp.notiq.notiq.presentation
+package com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

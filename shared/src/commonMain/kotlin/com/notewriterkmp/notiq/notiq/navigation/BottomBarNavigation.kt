@@ -42,7 +42,7 @@ import androidx.navigation.compose.rememberNavController
 import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.navigation.Screens.Screen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
-import com.notewriterkmp.notiq.notiq.presentation.NotesListViewModel
+import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

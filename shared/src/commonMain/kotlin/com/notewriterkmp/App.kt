@@ -4,7 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.notewriterkmp.notiq.notiq.navigation.MainNavigation
-import com.notewriterkmp.notiq.notiq.presentation.NotesListViewModel
+import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
