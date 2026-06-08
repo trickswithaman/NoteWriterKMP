@@ -3,15 +3,14 @@ package com.notewriterkmp.notiq.notiq.navigation
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+
 import androidx.navigation.compose.rememberNavController
-import com.notewriterkmp.db.NoteEntity
+import androidx.navigation.navArgument
 import com.notewriterkmp.notiq.notiq.navigation.Screens.Screen
 import com.notewriterkmp.notiq.notiq.presentation.NoteEditAndCreateScreen.NoteEditorScreen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
@@ -21,14 +20,12 @@ import com.notewriterkmp.notiq.notiq.presentation.SplashScreen.SplashScreen
 @Composable
 fun MainNavigation(
     viewModel: NotesListViewModel
-){
-    var selectedNote by rememberSaveable { mutableStateOf<NoteEntity?>(null) }
-
+) {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
         startDestination = Screen.SplashScreen.route
-    ){
+    ) {
         composable(
             route = Screen.SplashScreen.route,
             exitTransition = {
@@ -37,31 +34,35 @@ fun MainNavigation(
                     animationSpec = tween(250)
                 )
             }
-        ){
+        ) {
             SplashScreen(navigateTO = {
-                navController.navigate(Screen.DashboardScreen.route){
-                    popUpTo (Screen.SplashScreen.route){
+                navController.navigate(Screen.DashboardScreen.route) {
+                    popUpTo(Screen.SplashScreen.route) {
                         inclusive = true
                     }
                 }
             })
         }
-        composable (
+        composable(
             route = Screen.DashboardScreen.route
-        ){
+        ) {
             BottomNavigation(
-                viewModel, navController, onNoteSelected = { note ->
-                    selectedNote = note
+                viewModel, onNoteSelected = { note ->
+                    if (note != null) {
+                        navController.navigate(Screen.NoteDetailsScreen.passId(note.id))
+                    } else {
+                        navController.navigate(Screen.AddNoteScreen.route)
+                    }
                 }
             )
         }
-        composable(route = Screen.NoteListScren.route){
+        composable(route = Screen.NoteListScren.route) {
             NotesListScreen(
                 viewModel = viewModel,
                 onEdit = { note ->
-                    selectedNote = note
-                    navController.navigate(Screen.NoteDetailsScreen.route)
+                    navController.navigate(Screen.NoteDetailsScreen.passId(note.id))
                 }
+
 
             )
         }
@@ -74,9 +75,19 @@ fun MainNavigation(
                 }
             )
         }
-        composable(route = Screen.NoteDetailsScreen.route) {
+        composable(
+            route = Screen.NoteDetailsScreen.route,
+            arguments = listOf(navArgument("noteId") {
+                type = NavType.StringType
+            })
+        ) {
+
+            val noteId = it.arguments?.getString("noteId") ?: ""
+            val notes by viewModel.notes.collectAsState()
+            val note = notes.find { it.id == noteId }
+
             NoteEditorScreen(
-                note = selectedNote,
+                note = note,
                 viewModel = viewModel,
                 onBack = {
                     navController.popBackStack()

@@ -36,7 +36,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -49,7 +48,6 @@ import com.notewriterkmp.notiq.notiq.presentation.NotesListViewModel
 @Composable
 fun BottomNavigation(
     viewModel: NotesListViewModel,
-    navController: NavHostController,
     onNoteSelected: (NoteEntity?) -> Unit
 ) {
     val search by viewModel.searchQuery.collectAsState()
@@ -62,7 +60,6 @@ fun BottomNavigation(
             FloatingActionButton(
                 onClick = {
                     onNoteSelected(null)
-                    navController.navigate(Screen.AddNoteScreen.route)
                 },
                 modifier = Modifier.size(50.dp)
             ) {
@@ -195,7 +192,6 @@ fun BottomNavigation(
                         viewModel = viewModel,
                         onEdit = { note ->
                             onNoteSelected(note)
-                            navController.navigate(Screen.NoteDetailsScreen.route)
                         }
 
                     )

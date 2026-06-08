@@ -30,6 +30,7 @@ class NotesListViewModel(
 
     private var allNotes: List<NoteEntity> = emptyList()
 
+
     fun loadNotes() {
         viewModelScope.launch {
             allNotes = getNotes()
@@ -51,7 +52,8 @@ class NotesListViewModel(
     fun saveNote(
         existingNote: NoteEntity?,
         title: String,
-        content: String
+        content: String,
+        onSuccess: () -> Unit
     ) {
         viewModelScope.launch {
 
@@ -73,7 +75,12 @@ class NotesListViewModel(
             }
 
             loadNotes()
+            onSuccess()
         }
+    }
+
+    fun getNoteById(id: String): NoteEntity? {
+        return allNotes.find { it.id == id }
     }
 
     fun deleteNote(id: String) {
