@@ -7,6 +7,11 @@ sealed class Screen (val route : String){
     data object NoteDetailsScreen : Screen("note_details_screen/{noteId}") {
         fun passId(id: String) = "note_details_screen/$id"
     }
+    data object SearchScreen : Screen("search_screen")
+    data object AiAssistant : Screen("ai_assistant")
+    data object Setting : Screen("Settinh")
+
+
 
 
     data object AddNoteScreen : Screen("add_note_screen")

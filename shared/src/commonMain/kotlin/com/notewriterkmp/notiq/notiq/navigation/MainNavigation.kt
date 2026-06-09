@@ -80,9 +80,8 @@ fun MainNavigation(
             arguments = listOf(navArgument("noteId") {
                 type = NavType.StringType
             })
-        ) {
-
-            val noteId = it.arguments?.getString("noteId") ?: ""
+        ) { backStackEntry ->
+            val noteId = backStackEntry.arguments?.getString("noteId") ?: ""
             val notes by viewModel.notes.collectAsState()
             val note = notes.find { it.id == noteId }
 
