@@ -23,17 +23,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.notewriterkmp.db.NoteEntity
+import com.notewriterkmp.notiq.notiq.ui.theme.Red
+import com.notewriterkmp.notiq.notiq.ui.theme.White
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
 @Composable
 fun NotesListScreen(
-    viewModel: NotesListViewModel,
-    onEdit: (NoteEntity) -> Unit
+    viewModel: NotesListViewModel, onEdit: (NoteEntity) -> Unit
 ) {
     val notes by viewModel.notes.collectAsState()
 
@@ -50,24 +50,19 @@ fun NotesListScreen(
             NoteItem(
                 note = note,
                 onEditNote = { onEdit(note) },
-                onDeleteNote = { viewModel.deleteNote(note.id) }
-            )
+                onDeleteNote = { viewModel.deleteNote(note.id) })
         }
     }
 }
 
 @Composable
 fun NoteItem(
-    note: NoteEntity,
-    onEditNote: () -> Unit,
-    onDeleteNote: () -> Unit
+    note: NoteEntity, onEditNote: () -> Unit, onDeleteNote: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onEditNote),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onEditNote),
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = White)
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -80,15 +75,13 @@ fun NoteItem(
                 modifier = Modifier.weight(1f)
             )
             Text(
-                text = formatDate(note.createdAt) ,
+                text = formatDate(note.createdAt),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)
             )
             IconButton(onClick = onDeleteNote) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = Color.Red
+                    imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Red
                 )
             }
         }
@@ -100,7 +93,7 @@ fun formatDate(timestamp: Long): String {
     val instant = Instant.fromEpochMilliseconds(timestamp)
     val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
 
-    return "${localDateTime.dayOfMonth.toString().padStart(2, '0')}-" +
-            "${localDateTime.monthNumber.toString().padStart(2, '0')}-" +
-            "${localDateTime.year}"
+    return "${
+        localDateTime.dayOfMonth.toString().padStart(2, '0')
+    }-" + "${localDateTime.monthNumber.toString().padStart(2, '0')}-" + "${localDateTime.year}"
 }
