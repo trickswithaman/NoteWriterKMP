@@ -25,6 +25,7 @@ class NotesRepositoryImpl(
     }
 
 
+
     override suspend fun insertNote(note: NoteEntity) {
         local.insertNote(
             id = note.id,

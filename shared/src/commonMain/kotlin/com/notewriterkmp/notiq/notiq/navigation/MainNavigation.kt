@@ -12,7 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.notewriterkmp.notiq.notiq.navigation.Screens.Screen
-import com.notewriterkmp.notiq.notiq.presentation.NoteEditAndCreateScreen.NoteEditorScreen
+import com.notewriterkmp.notiq.notiq.presentation.NoteEditAndCreateScreen.NoteAddAndEditScreen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
 import com.notewriterkmp.notiq.notiq.presentation.SplashScreen.SplashScreen
@@ -67,7 +67,7 @@ fun MainNavigation(
             )
         }
         composable(route = Screen.AddNoteScreen.route) {
-            NoteEditorScreen(
+            NoteAddAndEditScreen(
                 note = null,
                 viewModel = viewModel,
                 onBack = {
@@ -85,7 +85,7 @@ fun MainNavigation(
             val notes by viewModel.notes.collectAsState()
             val note = notes.find { it.id == noteId }
 
-            NoteEditorScreen(
+            NoteAddAndEditScreen(
                 note = note,
                 viewModel = viewModel,
                 onBack = {
