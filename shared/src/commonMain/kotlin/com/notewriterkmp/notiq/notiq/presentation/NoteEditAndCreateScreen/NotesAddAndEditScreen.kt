@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -26,6 +28,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,222 +39,210 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
+import com.notewriterkmp.notiq.notiq.ui.theme.SecondaryColor
 import com.notewriterkmp.notiq.notiq.ui.theme.White
 import kotlinx.coroutines.delay
 
 
 @Composable
-
 fun NoteAddAndEditScreen(
     note: NoteEntity?, viewModel: NotesListViewModel, onBack: () -> Unit
 ) {
     var currentNote by remember { mutableStateOf(note) }
-    var title by rememberSaveable { mutableStateOf(note?.title ?: "") }
-    var content by rememberSaveable { mutableStateOf(note?.content ?: "") }
+    var titleValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(note?.title ?: ""))
+    }
+    var contentValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(note?.content ?: ""))
+    }
 
     LaunchedEffect(note) {
-        if (note != null && title.isEmpty() && content.isEmpty()) {
-            title = note.title ?: ""
-            content = note.content ?: ""
+        if (note != null && titleValue.text.isEmpty() && contentValue.text.isEmpty()) {
+            titleValue = TextFieldValue(note.title ?: "")
+            contentValue = TextFieldValue(note.content ?: "")
         }
     }
 
-    LaunchedEffect(title, content) {
-        // Don't save if everything is empty
-        if (title.isBlank() && content.isBlank()) return@LaunchedEffect
+    LaunchedEffect(titleValue.text, contentValue.text) {
+        if (titleValue.text.isBlank() && contentValue.text.isBlank()) return@LaunchedEffect
+        if (titleValue.text == (currentNote?.title ?: "") && contentValue.text == (currentNote?.content ?: "")) return@LaunchedEffect
 
-        // Don't save if nothing changed
-        if (title == (currentNote?.title ?: "") && content == (currentNote?.content
-                ?: "")
-        ) return@LaunchedEffect
-
-        // Debounce: wait for 1 second of inactivity before saving
         delay(1000L)
-
-        viewModel.saveNote(currentNote, title, content, onSuccess = { savedNote ->
+        viewModel.saveNote(currentNote, titleValue.text, contentValue.text, onSuccess = { savedNote ->
             currentNote = savedNote
         })
     }
 
     NoteAddAndEditContent(
-        note = currentNote,
-        title = title,
-        onTitleChange = { title = it },
-        content = content,
-        onContentChange = { content = it },
+        titleValue = titleValue,
+        onTitleValueChange = { titleValue = it },
+        contentValue = contentValue,
+        onContentValueChange = { contentValue = it },
         onBack = onBack
     )
 }
 
 @Composable
 fun NoteAddAndEditContent(
-    note: NoteEntity?,
-    title: String,
-    onTitleChange: (String) -> Unit,
-    content: String,
-    onContentChange: (String) -> Unit,
+    titleValue: TextFieldValue,
+    onTitleValueChange: (TextFieldValue) -> Unit,
+    contentValue: TextFieldValue,
+    onContentValueChange: (TextFieldValue) -> Unit,
     onBack: () -> Unit
-) {
+)
+{
+    val isKeyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    var lastFocusedField by remember { mutableIntStateOf(1) } // 0 for title, 1 for content
+
+    fun onTextValueChange(oldValue: TextFieldValue, newValue: TextFieldValue, update: (TextFieldValue) -> Unit) {
+        var finalValue = newValue
+        if (newValue.text.length < oldValue.text.length) {
+            val text = newValue.text
+            val sel = newValue.selection
+            if (sel.collapsed) {
+                val cursor = sel.start
+                if (cursor >= 2 && cursor <= text.length - 2 && text.substring(cursor - 2, cursor + 2) == "****") {
+                    finalValue = newValue.copy(text = text.removeRange(cursor - 2, cursor + 2), selection = TextRange(cursor - 2))
+                } else if (cursor >= 1 && cursor <= text.length - 1 && text.substring(cursor - 1, cursor + 1) == "__") {
+                    finalValue = newValue.copy(text = text.removeRange(cursor - 1, cursor + 1), selection = TextRange(cursor - 1))
+                } else if (cursor >= 3 && cursor <= text.length - 4 && text.substring(cursor - 3, cursor + 4) == "<u></u>") {
+                    finalValue = newValue.copy(text = text.removeRange(cursor - 3, cursor + 4), selection = TextRange(cursor - 3))
+                }
+            }
+        }
+        update(finalValue)
+    }
+
     Scaffold(
-        modifier = Modifier.fillMaxSize().padding(bottom = 30.dp),
+        modifier = Modifier.fillMaxSize(),
         containerColor = White,
         topBar = {
             TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = White
-            ), modifier = Modifier.padding(horizontal = 15.dp), navigationIcon = {
-                IconButton(onClick = onBack, modifier = Modifier.size(20.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBackIosNew,
-                        contentDescription = "Back",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }, actions = {
-                Row(
-                    modifier = Modifier.wrapContentSize(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ChangeCircle,
-                        contentDescription = "Auto-saving",
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
-            }, title = {
-
-            })
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = White),
+                modifier = Modifier.padding(horizontal = 15.dp),
+                navigationIcon = {
+                    IconButton(onClick = onBack, modifier = Modifier.size(20.dp)) {
+                        Icon(imageVector = Icons.Default.ArrowBackIosNew, contentDescription = "Back", modifier = Modifier.size(20.dp))
+                    }
+                },
+                actions = {
+                    Icon(imageVector = Icons.Default.ChangeCircle, contentDescription = "Auto-saving", modifier = Modifier.size(30.dp))
+                },
+                title = {}
+            )
         },
         bottomBar = {
-
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
-                color = Color.Gray.copy(0.3f)
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth().wrapContentHeight()
-                    .padding(horizontal = 15.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-
-                IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.FormatBold,
-                        contentDescription = "Auto-saving",
-                        modifier = Modifier.size(25.dp)
+            Column(modifier = Modifier.fillMaxWidth().imePadding()) {
+                HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.Gray.copy(0.3f))
+                Row(
+                    modifier = Modifier.fillMaxWidth().wrapContentHeight().padding(horizontal = 15.dp, vertical = 10.dp)
+                        .padding(bottom = if (isKeyboardVisible) 0.dp else 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val icons = listOf(
+                        Icons.Default.FormatBold,
+                        Icons.Default.FormatItalic,
+                        Icons.Default.FormatUnderlined,
+                        Icons.Outlined.Photo,
+                        Icons.Outlined.FormatLineSpacing,
+                        Icons.Default.FormatColorText,
+                        Icons.Outlined.Mic
                     )
 
-                }
-                IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.FormatItalic,
-                        contentDescription = "Auto-saving",
-                        modifier = Modifier.size(25.dp)
-                    )
+                    icons.forEachIndexed { index, icon ->
+                        val currentVal = if (lastFocusedField == 0) titleValue else contentValue
+                        val isSelected = when (index) {
+                            0 -> isStyleActive(currentVal, "**")
+                            1 -> isStyleActive(currentVal, "_")
+                            2 -> isStyleActive(currentVal, "<u>")
+                            else -> false
+                        }
 
-                }
-                IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.FormatUnderlined,
-                        contentDescription = "Auto-saving",
-                        modifier = Modifier.size(25.dp)
-                    )
+                        IconButton(
+                            onClick = {
+                                val onValChange = if (lastFocusedField == 0) onTitleValueChange else onContentValueChange
 
-                }
-                IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        imageVector = Icons.Outlined.Photo,
-                        contentDescription = "Auto-saving",
-                        modifier = Modifier.size(25.dp)
-                    )
-                }
-                IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        imageVector = Icons.Outlined.FormatLineSpacing,
-                        contentDescription = "Auto-saving",
-                        modifier = Modifier.size(25.dp)
-                    )
-                }
-                IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.FormatColorText,
-                        contentDescription = "Auto-saving",
-                        modifier = Modifier.size(25.dp)
-                    )
-                }
-                IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        imageVector = Icons.Outlined.Mic,
-                        contentDescription = "Auto-saving",
-                        modifier = Modifier.size(25.dp)
-                    )
-                }
+                                val newValue = when (index) {
+                                    0 -> toggleStyle(currentVal, "**", "**")
+                                    1 -> toggleStyle(currentVal, "_", "_")
+                                    2 -> toggleStyle(currentVal, "<u>", "</u>")
+                                    else -> currentVal
+                                }
 
-                FloatingActionButton(
-                    shape = RoundedCornerShape(5.dp),
-                    onClick = {},
-                    modifier = Modifier.size(50.dp),
+                                if (newValue != currentVal) {
+                                    onValChange(newValue)
+                                }
+                            },
+                            modifier = Modifier.size(40.dp),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = if (isSelected) SecondaryColor.copy(alpha = 0.5f) else Color.Transparent
+                            )
+                        ) {
+                            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(25.dp))
+                        }
+                    }
 
+                    FloatingActionButton(
+                        shape = RoundedCornerShape(5.dp),
+                        onClick = {},
+                        modifier = Modifier.size(50.dp),
                     ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Content",
-                        modifier = Modifier.size(25.dp)
-                    )
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "Add Content", modifier = Modifier.size(25.dp))
+                    }
                 }
-
             }
-
-        }) { paddingValues ->
-
-        Column(
-            modifier = Modifier.padding(
-                horizontal = 16.dp,
-                vertical = paddingValues.calculateTopPadding()
-            ).wrapContentSize()
-        ) {
-            Spacer(
-                modifier = Modifier.size(25.dp)
-            )
+        }
+    ) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp)) {
+            Spacer(modifier = Modifier.size(25.dp))
 
             TextField(
-                value = title,
-                onValueChange = onTitleChange,
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = {
-                    Text(
-                        "Title"
-                    )
-                },
+                value = titleValue,
+                onValueChange = { onTextValueChange(titleValue, it, onTitleValueChange) },
+                modifier = Modifier.fillMaxWidth().onFocusChanged { if (it.isFocused) lastFocusedField = 0 },
+                placeholder = { Text("Title") },
+                visualTransformation = MarkdownVisualTransformation(),
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
                     focusedContainerColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
-                )
+                ),
+                textStyle = MaterialTheme.typography.titleLarge
             )
+
             TextField(
-                value = content,
-                onValueChange = onContentChange,
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = {
-                    Text(
-                        "Description"
-                    )
-                },
+                value = contentValue,
+                onValueChange = { onTextValueChange(contentValue, it, onContentValueChange) },
+                modifier = Modifier.fillMaxWidth().weight(1f).onFocusChanged { if (it.isFocused) lastFocusedField = 1 },
+                placeholder = { Text("Description") },
+                visualTransformation = MarkdownVisualTransformation(),
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
                     focusedContainerColor = Color.Transparent,
@@ -260,6 +251,99 @@ fun NoteAddAndEditContent(
                 )
             )
         }
+    }
+}
+
+class MarkdownVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val original = text.text
+        val transformed = StringBuilder()
+        val originalToTransformed = IntArray(original.length + 1)
+        val transformedToOriginal = mutableListOf<Int>()
+
+        // Find all tag-like sequences to hide them
+        val tags = Regex("""\*\*|<u>|</u>|_""").findAll(original).toList()
+        
+        var tIdx = 0
+        for (oIdx in 0..original.length) {
+            val isTag = tags.any { oIdx in it.range } && oIdx < original.length
+            if (!isTag) {
+                if (oIdx < original.length) {
+                    transformed.append(original[oIdx])
+                    transformedToOriginal.add(oIdx)
+                }
+                originalToTransformed[oIdx] = tIdx
+                tIdx++
+            } else {
+                originalToTransformed[oIdx] = tIdx
+            }
+        }
+        transformedToOriginal.add(original.length)
+
+        val annotatedTransformed = buildAnnotatedString {
+            append(transformed.toString())
+            Regex("""(?s)\*\*(.*?)\*\*""").findAll(original).forEach {
+                addStyle(SpanStyle(fontWeight = FontWeight.Bold), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
+            }
+            Regex("""(?s)_(.*?)_""").findAll(original).forEach {
+                addStyle(SpanStyle(fontStyle = FontStyle.Italic), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
+            }
+            Regex("""(?s)<u>(.*?)</u>""").findAll(original).forEach {
+                addStyle(SpanStyle(textDecoration = TextDecoration.Underline), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
+            }
+        }
+
+        val mapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int = originalToTransformed[offset.coerceIn(0, original.length)]
+            override fun transformedToOriginal(offset: Int): Int = transformedToOriginal[offset.coerceIn(0, transformed.length)]
+        }
+
+        return TransformedText(annotatedTransformed, mapping)
+    }
+}
+
+private fun isStyleActive(value: TextFieldValue, prefix: String): Boolean {
+    val text = value.text
+    val selection = value.selection
+    val regex = when (prefix) {
+        "**" -> Regex("""(?s)\*\*(.*?)\*\*""")
+        "_" -> Regex("""(?s)_(.*?)_""")
+        "<u>" -> Regex("""(?s)<u>(.*?)</u>""")
+        else -> return false
+    }
+    return regex.findAll(text).any { 
+        selection.start >= it.range.first && selection.end <= it.range.last + 1
+    }
+}
+
+private fun toggleStyle(value: TextFieldValue, prefix: String, suffix: String): TextFieldValue {
+    val text = value.text
+    val selection = value.selection
+    val start = selection.min
+    val end = selection.max
+
+    val regex = when (prefix) {
+        "**" -> Regex("""(?s)\*\*(.*?)\*\*""")
+        "_" -> Regex("""(?s)_(.*?)_""")
+        "<u>" -> Regex("""(?s)<u>(.*?)</u>""")
+        else -> return value
+    }
+
+    val match = regex.findAll(text).find { start >= it.range.first && end <= it.range.last + 1 }
+
+    if (match != null) {
+        if (selection.collapsed && selection.start == match.range.last + 1 - suffix.length && match.value.length > prefix.length + suffix.length) {
+            return value.copy(selection = TextRange(match.range.last + 1))
+        }
+        val unwrapped = match.value.substring(prefix.length, match.value.length - suffix.length)
+        val newText = text.replaceRange(match.range.first, match.range.last + 1, unwrapped)
+        val newStart = (start - prefix.length).coerceIn(match.range.first, match.range.first + unwrapped.length)
+        val newEnd = (end - prefix.length).coerceIn(match.range.first, match.range.first + unwrapped.length)
+        return value.copy(text = newText, selection = TextRange(newStart, newEnd))
+    } else {
+        val selectionText = text.substring(start, end)
+        val wrapped = prefix + selectionText + suffix
+        return value.copy(text = text.replaceRange(start, end, wrapped), selection = TextRange(start + prefix.length, start + prefix.length + selectionText.length))
     }
 }
 
@@ -268,18 +352,10 @@ fun NoteAddAndEditContent(
 fun NoteAddAndEditScreenPreview() {
     MaterialTheme {
         NoteAddAndEditContent(
-            note = NoteEntity(
-            id = "1",
-            title = "",
-            content = "This is a sample note content",
-            isPinned = false,
-            createdAt = 0L,
-            updatedAt = 0L
-        ),
-            title = "Sample Note",
-            onTitleChange = {},
-            content = "This is a sample note content",
-            onContentChange = {},
+            titleValue = TextFieldValue("Title"),
+            onTitleValueChange = {},
+            contentValue = TextFieldValue("Description"),
+            onContentValueChange = {},
             onBack = {})
     }
 }
