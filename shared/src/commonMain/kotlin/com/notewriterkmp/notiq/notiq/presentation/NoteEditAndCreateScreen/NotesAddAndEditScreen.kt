@@ -66,6 +66,7 @@ import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
 import com.notewriterkmp.notiq.notiq.ui.theme.SecondaryColor
 import com.notewriterkmp.notiq.notiq.ui.theme.White
+import com.notewriterkmp.notiq.notiq.util.renderMarkdown
 import kotlinx.coroutines.delay
 
 
@@ -257,16 +258,34 @@ fun NoteAddAndEditContent(
 class MarkdownVisualTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val original = text.text
+        
+        // Match all patterns including those with empty content like **** or <u></u>
+        val boldMatches = Regex("""(?s)\*\*(.*?)\*\*""").findAll(original).toList()
+        val italicMatches = Regex("""(?s)_(.*?)_""").findAll(original).toList()
+        val underlineMatches = Regex("""(?s)<u>(.*?)</u>""").findAll(original).toList()
+        
+        val tagRanges = mutableListOf<IntRange>()
+        boldMatches.forEach { 
+            tagRanges.add(IntRange(it.range.first, it.range.first + 1))
+            tagRanges.add(IntRange(it.range.last - 1, it.range.last))
+        }
+        italicMatches.forEach {
+            tagRanges.add(IntRange(it.range.first, it.range.first))
+            tagRanges.add(IntRange(it.range.last, it.range.last))
+        }
+        underlineMatches.forEach {
+            tagRanges.add(IntRange(it.range.first, it.range.first + 2))
+            tagRanges.add(IntRange(it.range.last - 3, it.range.last))
+        }
+
         val transformed = StringBuilder()
         val originalToTransformed = IntArray(original.length + 1)
         val transformedToOriginal = mutableListOf<Int>()
 
-        // Find all tag-like sequences to hide them
-        val tags = Regex("""\*\*|<u>|</u>|_""").findAll(original).toList()
-        
         var tIdx = 0
         for (oIdx in 0..original.length) {
-            val isTag = tags.any { oIdx in it.range } && oIdx < original.length
+            val isTag = tagRanges.any { oIdx in it } && oIdx < original.length
+            
             if (!isTag) {
                 if (oIdx < original.length) {
                     transformed.append(original[oIdx])
@@ -280,18 +299,7 @@ class MarkdownVisualTransformation : VisualTransformation {
         }
         transformedToOriginal.add(original.length)
 
-        val annotatedTransformed = buildAnnotatedString {
-            append(transformed.toString())
-            Regex("""(?s)\*\*(.*?)\*\*""").findAll(original).forEach {
-                addStyle(SpanStyle(fontWeight = FontWeight.Bold), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
-            }
-            Regex("""(?s)_(.*?)_""").findAll(original).forEach {
-                addStyle(SpanStyle(fontStyle = FontStyle.Italic), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
-            }
-            Regex("""(?s)<u>(.*?)</u>""").findAll(original).forEach {
-                addStyle(SpanStyle(textDecoration = TextDecoration.Underline), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
-            }
-        }
+        val annotatedTransformed = renderMarkdown(original)
 
         val mapping = object : OffsetMapping {
             override fun originalToTransformed(offset: Int): Int = originalToTransformed[offset.coerceIn(0, original.length)]

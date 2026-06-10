@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.ui.theme.Red
 import com.notewriterkmp.notiq.notiq.ui.theme.White
+import com.notewriterkmp.notiq.notiq.util.renderMarkdown
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
@@ -70,7 +71,7 @@ fun NoteItem(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = note.title ?: "No Title",
+                text = renderMarkdown(note.title ?: ""),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)
             )
