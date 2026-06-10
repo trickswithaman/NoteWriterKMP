@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
+import kotlinx.datetime.Clock
 
 class NotesListViewModel(
     private val getNotes: GetNotesUseCase,
@@ -47,25 +47,21 @@ class NotesListViewModel(
         _notes.value = getNotes.search(allNotes, _searchQuery.value)
     }
 
-    val currentTime = Clock.System.now().toEpochMilliseconds()
-
     fun saveNote(
         existingNote: NoteEntity?,
         title: String,
         content: String,
-        onSuccess: () -> Unit
+        onSuccess: (NoteEntity) -> Unit = {}
     ) {
         viewModelScope.launch {
-
-
-
+            val now = kotlin.time.Clock.System .now().toEpochMilliseconds()
             val note = NoteEntity(
                 id = existingNote?.id ?: randomUUID(),
                 title = title,
                 content = content,
                 isPinned = existingNote?.isPinned ?: false,
-                createdAt = existingNote?.createdAt ?: currentTime,
-                updatedAt = currentTime
+                createdAt = existingNote?.createdAt ?: now,
+                updatedAt = now
             )
 
             if (existingNote == null) {
@@ -75,7 +71,7 @@ class NotesListViewModel(
             }
 
             loadNotes()
-            onSuccess()
+            onSuccess(note)
         }
     }
 

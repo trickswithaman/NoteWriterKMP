@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.ChangeCircle
-import androidx.compose.material.icons.filled.Swipe
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,17 +23,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -44,6 +42,7 @@ fun NoteAddAndEditScreen(
     viewModel: NotesListViewModel,
     onBack: () -> Unit
 ) {
+    var currentNote by remember { mutableStateOf(note) }
     var title by rememberSaveable { mutableStateOf(note?.title ?: "") }
     var content by rememberSaveable { mutableStateOf(note?.content ?: "") }
 
@@ -54,17 +53,27 @@ fun NoteAddAndEditScreen(
         }
     }
 
+    LaunchedEffect(title, content) {
+        // Don't save if everything is empty
+        if (title.isBlank() && content.isBlank()) return@LaunchedEffect
+
+        // Don't save if nothing changed
+        if (title == (currentNote?.title ?: "") && content == (currentNote?.content ?: "")) return@LaunchedEffect
+
+        // Debounce: wait for 1 second of inactivity before saving
+        delay(1000L)
+
+        viewModel.saveNote(currentNote, title, content, onSuccess = { savedNote ->
+            currentNote = savedNote
+        })
+    }
+
     NoteAddAndEditContent(
-        note = note,
+        note = currentNote,
         title = title,
         onTitleChange = { title = it },
         content = content,
         onContentChange = { content = it },
-        onSave = {
-            viewModel.saveNote(note, title, content, onSuccess = {
-                onBack()
-            })
-        },
         onBack = onBack
     )
 }
@@ -76,7 +85,6 @@ fun NoteAddAndEditContent(
     onTitleChange: (String) -> Unit,
     content: String,
     onContentChange: (String) -> Unit,
-    onSave: () -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -99,12 +107,9 @@ fun NoteAddAndEditContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.ChangeCircle,
-                            contentDescription = "Back",
+                            contentDescription = "Auto-saving",
                             modifier = Modifier.size(25.dp)
                         )
-                        Button(onClick = onSave) {
-                            Text(if (note != null) "Update" else "Save")
-                        }
                     }
                 },
                 title = {}
@@ -137,25 +142,24 @@ fun NoteAddAndEditContent(
             Spacer(
                 modifier = Modifier.size(20.dp)
             )
-            TextField(value = content, onValueChange = onContentChange,
+            TextField(
+                value = content,
+                onValueChange = onContentChange,
+                modifier = Modifier.fillMaxWidth(),
                 placeholder = {
                     Text(
                         "Description"
                     )
                 },
                 colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
-
-                ))
-
-
+                )
+            )
         }
     }
-
-
 }
 
 @Preview
@@ -175,7 +179,6 @@ fun NoteAddAndEditScreenPreview() {
             onTitleChange = {},
             content = "This is a sample note content",
             onContentChange = {},
-            onSave = {},
             onBack = {}
         )
     }
