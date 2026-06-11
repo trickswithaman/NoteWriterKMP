@@ -2,6 +2,7 @@ package com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -70,16 +71,27 @@ fun NoteItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = renderMarkdown(note.title ?: ""),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                text = formatDate(note.createdAt),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f)
-            )
+            Column(){
+                Text(
+                    text = renderMarkdown(note.title ?: ""),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = formatDate(note.createdAt),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Text(
+                    text = formatDate(note.updatedAt),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+
+            }
+
+
             IconButton(onClick = onDeleteNote) {
                 Icon(
                     imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Red
