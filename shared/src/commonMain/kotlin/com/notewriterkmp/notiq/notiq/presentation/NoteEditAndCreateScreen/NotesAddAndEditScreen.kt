@@ -38,6 +38,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -66,7 +67,11 @@ import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
 import com.notewriterkmp.notiq.notiq.ui.theme.SecondaryColor
 import com.notewriterkmp.notiq.notiq.ui.theme.White
+import com.notewriterkmp.notiq.notiq.util.boldRegex
+import com.notewriterkmp.notiq.notiq.util.getMarkdownMetadata
+import com.notewriterkmp.notiq.notiq.util.italicRegex
 import com.notewriterkmp.notiq.notiq.util.renderMarkdown
+import com.notewriterkmp.notiq.notiq.util.underlineRegex
 import kotlinx.coroutines.delay
 
 
@@ -115,12 +120,17 @@ fun NoteAddAndEditContent(
     contentValue: TextFieldValue,
     onContentValueChange: (TextFieldValue) -> Unit,
     onBack: () -> Unit
-)
-{
-    val isKeyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+) {
+    val density = LocalDensity.current
+    val imeInsets = WindowInsets.ime
+    val isKeyboardVisible by remember {
+        derivedStateOf { imeInsets.getBottom(density) > 0 }
+    }
     var lastFocusedField by remember { mutableIntStateOf(1) } // 0 for title, 1 for content
 
     fun onTextValueChange(oldValue: TextFieldValue, newValue: TextFieldValue, update: (TextFieldValue) -> Unit) {
+        if (newValue.text == oldValue.text && newValue.selection == oldValue.selection) return
+        
         var finalValue = newValue
         if (newValue.text.length < oldValue.text.length) {
             val text = newValue.text
@@ -158,77 +168,27 @@ fun NoteAddAndEditContent(
             )
         },
         bottomBar = {
-            Column(modifier = Modifier.fillMaxWidth().imePadding()) {
-                HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.Gray.copy(0.3f))
-                Row(
-                    modifier = Modifier.fillMaxWidth().wrapContentHeight().padding(horizontal = 15.dp, vertical = 10.dp)
-                        .padding(bottom = if (isKeyboardVisible) 0.dp else 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val icons = listOf(
-                        Icons.Default.FormatBold,
-                        Icons.Default.FormatItalic,
-                        Icons.Default.FormatUnderlined,
-                        Icons.Outlined.Photo,
-                        Icons.Outlined.FormatLineSpacing,
-                        Icons.Default.FormatColorText,
-                        Icons.Outlined.Mic
-                    )
-
-                    icons.forEachIndexed { index, icon ->
-                        val currentVal = if (lastFocusedField == 0) titleValue else contentValue
-                        val isSelected = when (index) {
-                            0 -> isStyleActive(currentVal, "**")
-                            1 -> isStyleActive(currentVal, "_")
-                            2 -> isStyleActive(currentVal, "<u>")
-                            else -> false
-                        }
-
-                        IconButton(
-                            onClick = {
-                                val onValChange = if (lastFocusedField == 0) onTitleValueChange else onContentValueChange
-
-                                val newValue = when (index) {
-                                    0 -> toggleStyle(currentVal, "**", "**")
-                                    1 -> toggleStyle(currentVal, "_", "_")
-                                    2 -> toggleStyle(currentVal, "<u>", "</u>")
-                                    else -> currentVal
-                                }
-
-                                if (newValue != currentVal) {
-                                    onValChange(newValue)
-                                }
-                            },
-                            modifier = Modifier.size(40.dp),
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = if (isSelected) SecondaryColor.copy(alpha = 0.5f) else Color.Transparent
-                            )
-                        ) {
-                            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(25.dp))
-                        }
-                    }
-
-                    FloatingActionButton(
-                        shape = RoundedCornerShape(5.dp),
-                        onClick = {},
-                        modifier = Modifier.size(50.dp),
-                    ) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "Add Content", modifier = Modifier.size(25.dp))
-                    }
-                }
-            }
+            StyleToolbar(
+                isKeyboardVisible = isKeyboardVisible,
+                lastFocusedField = lastFocusedField,
+                titleValue = titleValue,
+                contentValue = contentValue,
+                onTitleValueChange = onTitleValueChange,
+                onContentValueChange = onContentValueChange
+            )
         }
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp)) {
             Spacer(modifier = Modifier.size(25.dp))
+
+            val markdownTransformation = remember { MarkdownVisualTransformation() }
 
             TextField(
                 value = titleValue,
                 onValueChange = { onTextValueChange(titleValue, it, onTitleValueChange) },
                 modifier = Modifier.fillMaxWidth().onFocusChanged { if (it.isFocused) lastFocusedField = 0 },
                 placeholder = { Text("Title") },
-                visualTransformation = MarkdownVisualTransformation(),
+                visualTransformation = markdownTransformation,
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
                     focusedContainerColor = Color.Transparent,
@@ -243,7 +203,7 @@ fun NoteAddAndEditContent(
                 onValueChange = { onTextValueChange(contentValue, it, onContentValueChange) },
                 modifier = Modifier.fillMaxWidth().weight(1f).onFocusChanged { if (it.isFocused) lastFocusedField = 1 },
                 placeholder = { Text("Description") },
-                visualTransformation = MarkdownVisualTransformation(),
+                visualTransformation = markdownTransformation,
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
                     focusedContainerColor = Color.Transparent,
@@ -255,58 +215,87 @@ fun NoteAddAndEditContent(
     }
 }
 
+@Composable
+fun StyleToolbar(
+    isKeyboardVisible: Boolean,
+    lastFocusedField: Int,
+    titleValue: TextFieldValue,
+    contentValue: TextFieldValue,
+    onTitleValueChange: (TextFieldValue) -> Unit,
+    onContentValueChange: (TextFieldValue) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth().imePadding()) {
+        HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.Gray.copy(0.3f))
+        Row(
+            modifier = Modifier.fillMaxWidth().wrapContentHeight().padding(horizontal = 15.dp, vertical = 10.dp)
+                .padding(bottom = if (isKeyboardVisible) 0.dp else 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val icons = remember {
+                listOf(
+                    Icons.Default.FormatBold,
+                    Icons.Default.FormatItalic,
+                    Icons.Default.FormatUnderlined,
+                    Icons.Outlined.Photo,
+                    Icons.Outlined.FormatLineSpacing,
+                    Icons.Default.FormatColorText,
+                    Icons.Outlined.Mic
+                )
+            }
+
+            val currentVal = if (lastFocusedField == 0) titleValue else contentValue
+            val activeStyles = remember(currentVal.text, currentVal.selection) {
+                listOf(
+                    isStyleActive(currentVal, "**"),
+                    isStyleActive(currentVal, "_"),
+                    isStyleActive(currentVal, "<u>")
+                )
+            }
+
+            icons.forEachIndexed { index, icon ->
+                val isSelected = if (index < activeStyles.size) activeStyles[index] else false
+
+                IconButton(
+                    onClick = {
+                        val onValChange = if (lastFocusedField == 0) onTitleValueChange else onContentValueChange
+
+                        val newValue = when (index) {
+                            0 -> toggleStyle(currentVal, "**", "**")
+                            1 -> toggleStyle(currentVal, "_", "_")
+                            2 -> toggleStyle(currentVal, "<u>", "</u>")
+                            else -> currentVal
+                        }
+
+                        if (newValue != currentVal) {
+                            onValChange(newValue)
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = if (isSelected) SecondaryColor.copy(alpha = 0.5f) else Color.Transparent
+                    )
+                ) {
+                    Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(25.dp))
+                }
+            }
+        }
+    }
+}
+
 class MarkdownVisualTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val original = text.text
-        
-        // Match all patterns including those with empty content like **** or <u></u>
-        val boldMatches = Regex("""(?s)\*\*(.*?)\*\*""").findAll(original).toList()
-        val italicMatches = Regex("""(?s)_(.*?)_""").findAll(original).toList()
-        val underlineMatches = Regex("""(?s)<u>(.*?)</u>""").findAll(original).toList()
-        
-        val tagRanges = mutableListOf<IntRange>()
-        boldMatches.forEach { 
-            tagRanges.add(IntRange(it.range.first, it.range.first + 1))
-            tagRanges.add(IntRange(it.range.last - 1, it.range.last))
-        }
-        italicMatches.forEach {
-            tagRanges.add(IntRange(it.range.first, it.range.first))
-            tagRanges.add(IntRange(it.range.last, it.range.last))
-        }
-        underlineMatches.forEach {
-            tagRanges.add(IntRange(it.range.first, it.range.first + 2))
-            tagRanges.add(IntRange(it.range.last - 3, it.range.last))
-        }
-
-        val transformed = StringBuilder()
-        val originalToTransformed = IntArray(original.length + 1)
-        val transformedToOriginal = mutableListOf<Int>()
-
-        var tIdx = 0
-        for (oIdx in 0..original.length) {
-            val isTag = tagRanges.any { oIdx in it } && oIdx < original.length
-            
-            if (!isTag) {
-                if (oIdx < original.length) {
-                    transformed.append(original[oIdx])
-                    transformedToOriginal.add(oIdx)
-                }
-                originalToTransformed[oIdx] = tIdx
-                tIdx++
-            } else {
-                originalToTransformed[oIdx] = tIdx
-            }
-        }
-        transformedToOriginal.add(original.length)
-
-        val annotatedTransformed = renderMarkdown(original)
+        val metadata = getMarkdownMetadata(original)
 
         val mapping = object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int = originalToTransformed[offset.coerceIn(0, original.length)]
-            override fun transformedToOriginal(offset: Int): Int = transformedToOriginal[offset.coerceIn(0, transformed.length)]
+            override fun originalToTransformed(offset: Int): Int = 
+                metadata.originalToTransformed[offset.coerceIn(0, original.length)]
+            override fun transformedToOriginal(offset: Int): Int = 
+                metadata.transformedToOriginal[offset.coerceIn(0, metadata.annotatedString.length)]
         }
 
-        return TransformedText(annotatedTransformed, mapping)
+        return TransformedText(metadata.annotatedString, mapping)
     }
 }
 
@@ -314,9 +303,9 @@ private fun isStyleActive(value: TextFieldValue, prefix: String): Boolean {
     val text = value.text
     val selection = value.selection
     val regex = when (prefix) {
-        "**" -> Regex("""(?s)\*\*(.*?)\*\*""")
-        "_" -> Regex("""(?s)_(.*?)_""")
-        "<u>" -> Regex("""(?s)<u>(.*?)</u>""")
+        "**" -> boldRegex
+        "_" -> italicRegex
+        "<u>" -> underlineRegex
         else -> return false
     }
     return regex.findAll(text).any { 
@@ -331,9 +320,9 @@ private fun toggleStyle(value: TextFieldValue, prefix: String, suffix: String): 
     val end = selection.max
 
     val regex = when (prefix) {
-        "**" -> Regex("""(?s)\*\*(.*?)\*\*""")
-        "_" -> Regex("""(?s)_(.*?)_""")
-        "<u>" -> Regex("""(?s)<u>(.*?)</u>""")
+        "**" -> boldRegex
+        "_" -> italicRegex
+        "<u>" -> underlineRegex
         else -> return value
     }
 

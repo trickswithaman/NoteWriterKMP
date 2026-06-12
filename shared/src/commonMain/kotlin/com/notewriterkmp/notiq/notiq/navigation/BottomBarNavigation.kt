@@ -15,12 +15,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -138,10 +140,9 @@ fun BottomNavigation(
 
 @Composable
 fun Topbar(
-    search: String,
-    viewModel: NotesListViewModel,
-
-    ) {
+    search: String, viewModel: NotesListViewModel
+) {
+    val isGridView by viewModel.isGridView.collectAsState()
     val interactionSource = MutableInteractionSource()
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
@@ -172,12 +173,14 @@ fun Topbar(
                             )
                         },
                         trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = PrimaryColor
-                            )
+                            IconButton(onClick = { viewModel.toggleViewMode() }) {
+                                Icon(
+                                    imageVector = if (isGridView) Icons.Default.GridView else Icons.AutoMirrored.Filled.ViewList,
+                                    contentDescription = "Toggle view mode",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = PrimaryColor
+                                )
+                            }
                         },
                         container = {
                             OutlinedTextFieldDefaults.Container(
@@ -260,7 +263,7 @@ fun BottomBar(
                 val isSelected = currentRoute == item.route
 
                 NavigationBarItem(
-                    modifier = Modifier.padding(horizontal = 15.dp),
+                    modifier = Modifier.padding(10.dp),
                     selected = isSelected,
                     onClick = {
                         if (!isSelected) {
@@ -281,14 +284,14 @@ fun BottomBar(
                         ) {
                             Icon(
                                 imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                modifier = Modifier.size(25.dp),
+                                modifier = Modifier.size(20.dp),
                                 contentDescription = item.title
                             )
 
                             Spacer(modifier = Modifier.height(2.dp))
 
                             Text(
-                                text = item.title, fontSize = 14.sp
+                                text = item.title, fontSize = 12.sp
                             )
                         }
                     },

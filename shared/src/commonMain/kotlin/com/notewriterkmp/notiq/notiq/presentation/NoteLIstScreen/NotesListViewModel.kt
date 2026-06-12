@@ -8,9 +8,16 @@ import com.notewriterkmp.notiq.domain.usecase.DeleteNoteUseCase
 import com.notewriterkmp.notiq.domain.usecase.GetNotesUseCase
 import com.notewriterkmp.notiq.domain.usecase.UpdateNoteUseCase
 import com.notewriterkmp.notiq.notiq.util.randomUUID
+import com.russhwolf.settings.Settings
+import com.russhwolf.settings.set
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -21,30 +28,36 @@ class NotesListViewModel(
     private val updateNoteUseCase: UpdateNoteUseCase
 ) : ViewModel() {
 
+    private val settings: Settings = Settings()
+    private val VIEW_MODE_KEY = "is_grid_view"
 
-    private val _notes = MutableStateFlow<List<NoteEntity>>(emptyList())
-    val notes: StateFlow<List<NoteEntity>> = _notes
-
+    private val _allNotes = MutableStateFlow<List<NoteEntity>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
-    private var allNotes: List<NoteEntity> = emptyList()
+    private val _isGridView = MutableStateFlow(settings.getBoolean(VIEW_MODE_KEY, false))
+    val isGridView = _isGridView.asStateFlow()
+
+    @OptIn(FlowPreview::class)
+    val notes: StateFlow<List<NoteEntity>> = combine(_allNotes, _searchQuery.debounce(300L)) { notes, query ->
+        getNotes.search(notes, query)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
     fun loadNotes() {
         viewModelScope.launch {
-            allNotes = getNotes()
-            applyFilter()
+            _allNotes.value = getNotes()
         }
     }
 
     fun onSearch(query: String) {
         _searchQuery.value = query
-        applyFilter()
     }
 
-    private fun applyFilter() {
-        _notes.value = getNotes.search(allNotes, _searchQuery.value)
+    fun toggleViewMode() {
+        val newValue = !_isGridView.value
+        _isGridView.value = newValue
+        settings[VIEW_MODE_KEY] = newValue
     }
 
     fun saveNote(
@@ -54,7 +67,7 @@ class NotesListViewModel(
         onSuccess: (NoteEntity) -> Unit = {}
     ) {
         viewModelScope.launch {
-            val now = kotlin.time.Clock.System .now().toEpochMilliseconds()
+            val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
             val note = NoteEntity(
                 id = existingNote?.id ?: randomUUID(),
                 title = title,
@@ -76,7 +89,7 @@ class NotesListViewModel(
     }
 
     fun getNoteById(id: String): NoteEntity? {
-        return allNotes.find { it.id == id }
+        return _allNotes.value.find { it.id == id }
     }
 
     fun deleteNote(id: String) {

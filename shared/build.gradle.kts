@@ -68,6 +68,8 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
 
+            implementation(libs.multiplatform.settings.no.arg)
+
             implementation("org.jetbrains.androidx.core:core-bundle:1.1.0-alpha03")
             // Navigation
 //            implementation(libs.navigation.compose)
