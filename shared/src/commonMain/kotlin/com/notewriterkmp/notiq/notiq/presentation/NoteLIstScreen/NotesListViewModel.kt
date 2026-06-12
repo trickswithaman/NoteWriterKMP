@@ -7,6 +7,7 @@ import com.notewriterkmp.notiq.domain.usecase.AddNoteUseCase
 import com.notewriterkmp.notiq.domain.usecase.DeleteNoteUseCase
 import com.notewriterkmp.notiq.domain.usecase.GetNotesUseCase
 import com.notewriterkmp.notiq.domain.usecase.UpdateNoteUseCase
+import com.notewriterkmp.notiq.notiq.util.UiState
 import com.notewriterkmp.notiq.notiq.util.randomUUID
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.set
@@ -35,18 +36,41 @@ class NotesListViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(true)
+    private val _error = MutableStateFlow<String?>(null)
+
     private val _isGridView = MutableStateFlow(settings.getBoolean(VIEW_MODE_KEY, false))
     val isGridView = _isGridView.asStateFlow()
 
     @OptIn(FlowPreview::class)
-    val notes: StateFlow<List<NoteEntity>> = combine(_allNotes, _searchQuery.debounce(300L)) { notes, query ->
-        getNotes.search(notes, query)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val notes: StateFlow<UiState<List<NoteEntity>>> = combine(
+        _allNotes,
+        _searchQuery.debounce(300L),
+        _isLoading,
+        _error
+    ) { notes, query, isLoading, error ->
+        when {
+            isLoading -> UiState.Loading
+            error != null -> UiState.Error(error)
+            else -> {
+                val filteredNotes = getNotes.search(notes, query)
+                if (filteredNotes.isEmpty()) UiState.Empty else UiState.Success(filteredNotes)
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
 
     fun loadNotes() {
         viewModelScope.launch {
-            _allNotes.value = getNotes()
+            _isLoading.value = true
+            try {
+                _allNotes.value = getNotes()
+                _error.value = null
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unknown error occurred"
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 

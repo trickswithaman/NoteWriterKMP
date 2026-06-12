@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.navigation.Screens.Screen
+import com.notewriterkmp.notiq.notiq.util.UiState
 import com.notewriterkmp.notiq.notiq.presentation.NoteEditAndCreateScreen.NoteAddAndEditScreen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
@@ -22,7 +23,9 @@ import com.notewriterkmp.notiq.notiq.presentation.SplashScreen.SplashScreen
 fun MainNavigation(
     viewModel: NotesListViewModel
 ) {
-    val notes by viewModel.notes.collectAsState()
+    val notesState by viewModel.notes.collectAsState()
+    val notes = if (notesState is UiState.Success) (notesState as UiState.Success).data else emptyList()
+
     MainNavigationContent(notes = notes, splashScreen = { onNavigate ->
         SplashScreen(navigateTO = onNavigate)
     }, dashboardScreen = { onNoteSelected ->

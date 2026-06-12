@@ -2,6 +2,7 @@ package com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,8 +17,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.ui.theme.Red
 import com.notewriterkmp.notiq.notiq.ui.theme.White
+import com.notewriterkmp.notiq.notiq.util.UiState
 import com.notewriterkmp.notiq.notiq.util.renderMarkdown
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -42,26 +47,69 @@ import kotlin.time.Instant
 fun NotesListScreen(
     viewModel: NotesListViewModel, onEdit: (NoteEntity) -> Unit
 ) {
-    val notes by viewModel.notes.collectAsState()
+    val notesState by viewModel.notes.collectAsState()
     val isGridView by viewModel.isGridView.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadNotes()
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(if (isGridView) 2 else 1),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(notes, key = { it.id }) { note ->
-            NoteItem(
-                note = note,
-                isGridView = isGridView,
-                onEditNote = { onEdit(note) },
-                onDeleteNote = { viewModel.deleteNote(note.id) })
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (val state = notesState) {
+            is UiState.Loading -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+            is UiState.Success -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(if (isGridView) 2 else 1),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(state.data, key = { it.id }) { note ->
+                        NoteItem(
+                            note = note,
+                            isGridView = isGridView,
+                            onEditNote = { onEdit(note) },
+                            onDeleteNote = { viewModel.deleteNote(note.id) })
+                    }
+                }
+            }
+            is UiState.Error -> {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = state.message,
+                        color = Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                    Button(onClick = { viewModel.loadNotes() }) {
+                        Text("Retry")
+                    }
+                }
+            }
+            is UiState.Empty -> {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Description,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.outline
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No notes found",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+            }
         }
     }
 }
