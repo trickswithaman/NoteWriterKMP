@@ -104,7 +104,13 @@ fun NoteAddAndEditScreen(
         })
     }
 
-
+    NoteAddAndEditContent(
+        titleValue = titleValue,
+        onTitleValueChange = { titleValue = it },
+        contentValue = contentValue,
+        onContentValueChange = { contentValue = it },
+        onBack = onBack
+    )
 }
 
 @Composable
