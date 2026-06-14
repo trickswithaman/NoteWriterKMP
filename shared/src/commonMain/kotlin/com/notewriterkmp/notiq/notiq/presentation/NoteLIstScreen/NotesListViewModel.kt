@@ -88,6 +88,7 @@ class NotesListViewModel(
         existingNote: NoteEntity?,
         title: String,
         content: String,
+        isPinned: Boolean? = null,
         onSuccess: (NoteEntity) -> Unit = {}
     ) {
         viewModelScope.launch {
@@ -96,7 +97,7 @@ class NotesListViewModel(
                 id = existingNote?.id ?: randomUUID(),
                 title = title,
                 content = content,
-                isPinned = existingNote?.isPinned ?: false,
+                isPinned = isPinned ?: existingNote?.isPinned ?: false,
                 createdAt = existingNote?.createdAt ?: now,
                 updatedAt = now
             )

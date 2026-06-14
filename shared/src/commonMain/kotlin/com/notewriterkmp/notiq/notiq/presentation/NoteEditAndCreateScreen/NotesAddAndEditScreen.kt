@@ -16,11 +16,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.filled.ChangeCircle
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatColorText
 import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatUnderlined
+import androidx.compose.material.icons.filled.OfflinePin
 import androidx.compose.material.icons.outlined.FormatLineSpacing
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Photo
@@ -86,25 +87,29 @@ fun NoteAddAndEditScreen(
     var contentValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(note?.content ?: ""))
     }
+    var isPinned by remember { mutableStateOf(note?.isPinned ?: false) }
 
     LaunchedEffect(note) {
         if (note != null && titleValue.text.isEmpty() && contentValue.text.isEmpty()) {
             titleValue = TextFieldValue(note.title ?: "")
             contentValue = TextFieldValue(note.content ?: "")
+            isPinned = note.isPinned
         }
     }
 
-    LaunchedEffect(titleValue.text, contentValue.text) {
+    LaunchedEffect(titleValue.text, contentValue.text, isPinned) {
         if (titleValue.text.isBlank() && contentValue.text.isBlank()) return@LaunchedEffect
-        if (titleValue.text == (currentNote?.title ?: "") && contentValue.text == (currentNote?.content ?: "")) return@LaunchedEffect
+        if (titleValue.text == (currentNote?.title ?: "") && contentValue.text == (currentNote?.content ?: "") && isPinned == (currentNote?.isPinned ?: false)) return@LaunchedEffect
 
         delay(1000L)
-        viewModel.saveNote(currentNote, titleValue.text, contentValue.text, onSuccess = { savedNote ->
+        viewModel.saveNote(currentNote, titleValue.text, contentValue.text, isPinned, onSuccess = { savedNote ->
             currentNote = savedNote
         })
     }
 
     NoteAddAndEditContent(
+        isPinned = isPinned,
+        onTogglePin = { isPinned = !isPinned },
         titleValue = titleValue,
         onTitleValueChange = { titleValue = it },
         contentValue = contentValue,
@@ -115,6 +120,8 @@ fun NoteAddAndEditScreen(
 
 @Composable
 fun NoteAddAndEditContent(
+    isPinned : Boolean = false,
+    onTogglePin: () -> Unit,
     titleValue: TextFieldValue,
     onTitleValueChange: (TextFieldValue) -> Unit,
     contentValue: TextFieldValue,
@@ -162,7 +169,15 @@ fun NoteAddAndEditContent(
                     }
                 },
                 actions = {
-                    Icon(imageVector = Icons.Default.ChangeCircle, contentDescription = "Auto-saving", modifier = Modifier.size(30.dp))
+                    IconButton(onClick = onTogglePin) {
+                        Icon(
+                            imageVector = if (!isPinned) Icons.Default.PushPin else
+                                Icons.Default.OfflinePin,
+                            contentDescription = "Pin Notes",
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+
                 },
                 title = {}
             )
@@ -350,6 +365,7 @@ fun NoteAddAndEditScreenPreview() {
     MaterialTheme {
         NoteAddAndEditContent(
             titleValue = TextFieldValue("Title"),
+            onTogglePin = {},
             onTitleValueChange = {},
             contentValue = TextFieldValue("Description"),
             onContentValueChange = {},

@@ -131,7 +131,7 @@ fun NoteItem(
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onEditNote),
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = White)
+        colors = CardDefaults.cardColors(containerColor = if (note.isPinned ) Red else White )
     ) {
         Column(
             modifier = Modifier.padding(16.dp).fillMaxWidth()
