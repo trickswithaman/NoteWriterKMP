@@ -42,6 +42,10 @@ class NotesListViewModel(
     private val _isGridView = MutableStateFlow(settings.getBoolean(VIEW_MODE_KEY, false))
     val isGridView = _isGridView.asStateFlow()
 
+    init {
+        loadNotes()
+    }
+
     @OptIn(FlowPreview::class)
     val notes: StateFlow<UiState<List<NoteEntity>>> = combine(
         _allNotes,
@@ -66,7 +70,9 @@ class NotesListViewModel(
 
     fun loadNotes() {
         viewModelScope.launch {
-            _isLoading.value = true
+            if (_allNotes.value.isEmpty()) {
+                _isLoading.value = true
+            }
             try {
                 _allNotes.value = getNotes()
                 _error.value = null
