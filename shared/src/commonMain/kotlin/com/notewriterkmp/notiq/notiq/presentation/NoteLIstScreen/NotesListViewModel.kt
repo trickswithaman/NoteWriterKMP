@@ -54,6 +54,10 @@ class NotesListViewModel(
             error != null -> UiState.Error(error)
             else -> {
                 val filteredNotes = getNotes.search(notes, query)
+                    .sortedWith(
+                        compareByDescending<NoteEntity> { it.isPinned == true }
+                            .thenByDescending { it.createdAt }
+                    )
                 if (filteredNotes.isEmpty()) UiState.Empty else UiState.Success(filteredNotes)
             }
         }

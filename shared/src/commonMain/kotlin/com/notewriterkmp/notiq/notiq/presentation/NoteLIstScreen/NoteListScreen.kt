@@ -12,12 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -131,7 +133,9 @@ fun NoteItem(
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onEditNote),
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = if (note.isPinned ) Red else White )
+        colors = CardDefaults.cardColors(
+            containerColor = if (note.isPinned == true) MaterialTheme.colorScheme.primaryContainer else White
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp).fillMaxWidth()
@@ -142,11 +146,27 @@ fun NoteItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = renderedTitle,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = if (isGridView) 2 else 1
-                    )
+                    Row(
+                        Modifier.wrapContentSize(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = renderedTitle,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = if (isGridView) 2 else 1,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        if (note.isPinned == true) {
+                            Icon(
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = "Pinned note",
+                                modifier = Modifier.size(16.dp).padding(start = 4.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+ 
                     if (!isGridView) {
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
