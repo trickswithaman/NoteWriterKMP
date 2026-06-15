@@ -64,6 +64,26 @@ fun getMarkdownMetadata(original: String): MarkdownMetadata {
     }
     transformedToOriginal.add(original.length)
 
+    // Override mappings to favor being "inside" styled ranges at boundaries
+    boldMatches.forEach {
+        val contentStart = it.range.first + 2
+        val contentEndPos = it.range.last + 1 - 2
+        transformedToOriginal[originalToTransformed[contentStart]] = contentStart
+        transformedToOriginal[originalToTransformed[contentEndPos]] = contentEndPos
+    }
+    italicMatches.forEach {
+        val contentStart = it.range.first + 1
+        val contentEndPos = it.range.last + 1 - 1
+        transformedToOriginal[originalToTransformed[contentStart]] = contentStart
+        transformedToOriginal[originalToTransformed[contentEndPos]] = contentEndPos
+    }
+    underlineMatches.forEach {
+        val contentStart = it.range.first + 3
+        val contentEndPos = it.range.last + 1 - 4
+        transformedToOriginal[originalToTransformed[contentStart]] = contentStart
+        transformedToOriginal[originalToTransformed[contentEndPos]] = contentEndPos
+    }
+
     val annotatedString = buildAnnotatedString {
         append(transformed.toString())
         boldMatches.forEach {
