@@ -152,14 +152,7 @@ fun NoteItem(
                             maxLines = if (isGridView) 2 else 1,
                             modifier = Modifier.weight(1f, fill = false)
                         )
-                        if (note.isPinned == true) {
-                            Icon(
-                                imageVector = Icons.Default.PushPin,
-                                contentDescription = "Pinned note",
-                                modifier = Modifier.size(16.dp).padding(start = 4.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
+
                     }
  
                     if (!isGridView) {
