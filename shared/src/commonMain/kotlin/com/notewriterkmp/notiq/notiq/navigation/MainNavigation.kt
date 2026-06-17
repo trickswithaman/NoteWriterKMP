@@ -78,7 +78,7 @@ fun MainNavigationContent(
                 }
             }
         }
-        composable(route = Screen.NoteListScren.route) {
+        composable(route = Screen.NoteListScreen.route) {
             noteListScreen { note ->
                 navController.navigate(Screen.NoteDetailsScreen.passId(note.id))
             }

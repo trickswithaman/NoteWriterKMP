@@ -26,7 +26,7 @@ fun getButtonbarItems(): ArrayList<Bottomitem>{
             title = "Home",
             selectedIcon = Icons.Filled.Home,
             unselectedIcon = Icons.Outlined.Home,
-            route = Screen.NoteListScren.route
+            route = Screen.NoteListScreen.route
         ),
         Bottomitem(
             title = "Search",

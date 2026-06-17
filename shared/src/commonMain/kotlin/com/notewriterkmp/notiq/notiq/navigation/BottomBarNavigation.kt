@@ -6,19 +6,24 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -76,7 +81,7 @@ fun BottomNavigation(
     val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(floatingActionButton = {
-        if (currentRoute == Screen.NoteListScren.route) {
+        if (currentRoute == Screen.NoteListScreen.route) {
             FloatingActionButton(
                 onClick = {
                     onNoteSelected(null)
@@ -101,9 +106,9 @@ fun BottomNavigation(
             NavHost(
                 modifier = Modifier.padding(15.dp),
                 navController = navController,
-                startDestination = Screen.NoteListScren.route,
+                startDestination = Screen.NoteListScreen.route,
             ) {
-                composable(route = Screen.NoteListScren.route) {
+                composable(route = Screen.NoteListScreen.route) {
                     NotesListScreen(
                         viewModel = viewModel, onEdit = { note ->
                             onNoteSelected(note)
@@ -173,13 +178,30 @@ fun Topbar(
                             )
                         },
                         trailingIcon = {
-                            IconButton(onClick = { viewModel.toggleViewMode() }) {
-                                Icon(
-                                    imageVector = if (isGridView) Icons.Default.GridView else Icons.AutoMirrored.Filled.ViewList,
-                                    contentDescription = "Toggle view mode",
-                                    modifier = Modifier.size(20.dp),
-                                    tint = PrimaryColor
-                                )
+                            Row (
+                                modifier = Modifier.wrapContentSize(),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ){
+                                IconButton(onClick = {
+                                    if (search.isNotEmpty()) viewModel.onSearch("")
+                                }) {
+                                    Icon(
+                                        imageVector = if (search.isEmpty()) Icons.Default.Search else Icons.Default.Close,
+                                        contentDescription = if (search.isEmpty()) "Search" else "Clear search",
+                                        modifier = Modifier.size(26.dp),
+                                        tint = PrimaryColor
+                                    )
+                                }
+
+                                IconButton(onClick = { viewModel.toggleViewMode() }) {
+                                    Icon(
+                                        imageVector = if (isGridView) Icons.Default.GridView else Icons.AutoMirrored.Filled.ViewList,
+                                        contentDescription = "Toggle view mode",
+                                        modifier = Modifier.size(25.dp),
+                                        tint = PrimaryColor
+                                    )
+                                }
                             }
                         },
                         container = {
