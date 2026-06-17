@@ -1,24 +1,65 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# NoteWriterKMP
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+NoteWriterKMP is a modern, cross-platform note-taking application built using **Kotlin Multiplatform (KMP)** and **Compose Multiplatform**. It allows users to create, manage, and search notes with a beautiful, responsive UI.
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+## 🚀 Features
 
-### Running the apps
+- **Cross-Platform**: Shared logic and UI across Android and iOS.
+- **Notes Management**: Create, edit, and view notes.
+- **Search**: Quickly find notes with real-time search functionality.
+- **Flexible View Modes**: Toggle between Grid and List views for your notes.
+- **AI Assistant**: Integration for AI-powered note-taking assistance (In Progress).
+- **Modern UI**: Built with Material 3 and Compose Multiplatform.
+- **Local Persistence**: Uses SQLDelight for reliable local data storage.
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+## 🛠 Tech Stack
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+- **Kotlin Multiplatform**: Core logic sharing.
+- **Compose Multiplatform**: Shared UI for Android and iOS.
+- **SQLDelight**: Type-safe database for local storage.
+- **Koin**: Lightweight dependency injection.
+- **Navigation Compose**: Type-safe navigation within the app.
+- **KotlinX Coroutines**: Asynchronous programming.
+- **KotlinX Serialization**: Data serialization.
 
----
+## 📂 Project Structure
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+- `/shared`: Contains the core logic and shared UI (Compose Multiplatform).
+    - `commonMain`: Shared code for all platforms (Logic, UI, Database).
+    - `androidMain`: Android-specific implementations and DI.
+    - `iosMain`: iOS-specific implementations.
+- `/androidApp`: Android-specific entry point and configuration.
+- `/iosApp`: iOS-specific entry point (SwiftUI) and configuration.
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Android Studio Koala or newer.
+- Xcode 15 or newer (for iOS development).
+- Kotlin Multiplatform plugin installed in Android Studio.
+
+### Running the App
+
+#### Android
+1. Open the project in Android Studio.
+2. Select `androidApp` in the run configurations.
+3. Click **Run**.
+
+#### iOS
+1. Open the `iosApp/iosApp.xcworkspace` file in Xcode.
+2. Select a simulator or physical device.
+3. Click **Run**.
+
+Alternatively, you can run the Android app via CLI:
+```bash
+./gradlew :androidApp:installDebug
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! If you'd like to improve NoteWriterKMP, feel free to fork the repository and submit a pull request.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
