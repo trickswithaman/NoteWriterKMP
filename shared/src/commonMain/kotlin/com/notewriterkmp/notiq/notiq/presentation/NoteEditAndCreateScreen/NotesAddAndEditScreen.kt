@@ -1,77 +1,40 @@
 package com.notewriterkmp.notiq.notiq.presentation.NoteEditAndCreateScreen
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatColorText
 import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatUnderlined
-import androidx.compose.material.icons.filled.OfflinePin
 import androidx.compose.material.icons.outlined.FormatLineSpacing
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Photo
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
-import com.notewriterkmp.notiq.notiq.ui.theme.SecondaryColor
-import com.notewriterkmp.notiq.notiq.ui.theme.White
 import com.notewriterkmp.notiq.notiq.util.boldRegex
 import com.notewriterkmp.notiq.notiq.util.getMarkdownMetadata
 import com.notewriterkmp.notiq.notiq.util.italicRegex
-import com.notewriterkmp.notiq.notiq.util.renderMarkdown
 import com.notewriterkmp.notiq.notiq.util.underlineRegex
 import kotlinx.coroutines.delay
 
@@ -118,6 +81,7 @@ fun NoteAddAndEditScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteAddAndEditContent(
     isPinned : Boolean = false,
@@ -158,26 +122,27 @@ fun NoteAddAndEditContent(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = White,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = White),
-                modifier = Modifier.padding(horizontal = 15.dp),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                    actionIconContentColor = MaterialTheme.colorScheme.onBackground
+                ),
                 navigationIcon = {
-                    IconButton(onClick = onBack, modifier = Modifier.size(20.dp)) {
-                        Icon(imageVector = Icons.Default.ArrowBackIosNew, contentDescription = "Back", modifier = Modifier.size(20.dp))
+                    IconButton(onClick = onBack) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     IconButton(onClick = onTogglePin) {
                         Icon(
-                            imageVector = if (!isPinned) Icons.Default.PushPin else
-                                Icons.Default.OfflinePin,
-                            contentDescription = "Pin Notes",
-                            modifier = Modifier.size(30.dp)
+                            imageVector = if (isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
+                            contentDescription = "Pin Note",
+                            tint = if (isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                         )
                     }
-
                 },
                 title = {}
             )
@@ -194,15 +159,15 @@ fun NoteAddAndEditContent(
         }
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp)) {
-            Spacer(modifier = Modifier.size(25.dp))
-
             val markdownTransformation = remember { MarkdownVisualTransformation() }
 
             TextField(
                 value = titleValue,
                 onValueChange = { onTextValueChange(titleValue, it, onTitleValueChange) },
                 modifier = Modifier.fillMaxWidth().onFocusChanged { if (it.isFocused) lastFocusedField = 0 },
-                placeholder = { Text("Title") },
+                placeholder = { 
+                    Text("Title", style = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.outline)) 
+                },
                 visualTransformation = markdownTransformation,
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
@@ -210,21 +175,24 @@ fun NoteAddAndEditContent(
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                 ),
-                textStyle = MaterialTheme.typography.titleLarge
+                textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
             )
 
             TextField(
                 value = contentValue,
                 onValueChange = { onTextValueChange(contentValue, it, onContentValueChange) },
                 modifier = Modifier.fillMaxWidth().weight(1f).onFocusChanged { if (it.isFocused) lastFocusedField = 1 },
-                placeholder = { Text("Description") },
+                placeholder = { 
+                    Text("Note content...", style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.outline)) 
+                },
                 visualTransformation = markdownTransformation,
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
                     focusedContainerColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
-                )
+                ),
+                textStyle = MaterialTheme.typography.bodyLarge
             )
         }
     }
@@ -239,12 +207,16 @@ fun StyleToolbar(
     onTitleValueChange: (TextFieldValue) -> Unit,
     onContentValueChange: (TextFieldValue) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().imePadding()) {
-        HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.Gray.copy(0.3f))
+    if (!isKeyboardVisible) return
+
+    Surface(
+        modifier = Modifier.fillMaxWidth().imePadding(),
+        tonalElevation = 2.dp,
+        color = MaterialTheme.colorScheme.surfaceVariant
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth().wrapContentHeight().padding(horizontal = 15.dp, vertical = 10.dp)
-                .padding(bottom = if (isKeyboardVisible) 0.dp else 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
             val icons = remember {
@@ -286,12 +258,12 @@ fun StyleToolbar(
                             onValChange(newValue)
                         }
                     },
-                    modifier = Modifier.weight(1f),
                     colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = if (isSelected) SecondaryColor.copy(alpha = 0.5f) else Color.Transparent
+                        contentColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
                     )
                 ) {
-                    Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(25.dp))
+                    Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(22.dp))
                 }
             }
         }
@@ -356,19 +328,5 @@ private fun toggleStyle(value: TextFieldValue, prefix: String, suffix: String): 
         val selectionText = text.substring(start, end)
         val wrapped = prefix + selectionText + suffix
         return value.copy(text = text.replaceRange(start, end, wrapped), selection = TextRange(start + prefix.length, start + prefix.length + selectionText.length))
-    }
-}
-
-@Preview
-@Composable
-fun NoteAddAndEditScreenPreview() {
-    MaterialTheme {
-        NoteAddAndEditContent(
-            titleValue = TextFieldValue("Title"),
-            onTogglePin = {},
-            onTitleValueChange = {},
-            contentValue = TextFieldValue("Description"),
-            onContentValueChange = {},
-            onBack = {})
     }
 }

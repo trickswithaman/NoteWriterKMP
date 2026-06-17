@@ -2,48 +2,19 @@ package com.notewriterkmp.notiq.notiq.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.automirrored.filled.ViewList
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,15 +28,6 @@ import com.notewriterkmp.notiq.domain.model.getButtonbarItems
 import com.notewriterkmp.notiq.notiq.navigation.Screens.Screen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
-import com.notewriterkmp.notiq.notiq.ui.theme.BackgroundColor
-import com.notewriterkmp.notiq.notiq.ui.theme.Black
-import com.notewriterkmp.notiq.notiq.ui.theme.Blue
-import com.notewriterkmp.notiq.notiq.ui.theme.PrimaryColor
-import com.notewriterkmp.notiq.notiq.ui.theme.PrimaryTextColor
-import com.notewriterkmp.notiq.notiq.ui.theme.SecondaryColor
-import com.notewriterkmp.notiq.notiq.ui.theme.SecondaryTextColor
-import com.notewriterkmp.notiq.notiq.ui.theme.Transparent
-import com.notewriterkmp.notiq.notiq.ui.theme.White
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,257 +35,192 @@ fun BottomNavigation(
     viewModel: NotesListViewModel, onNoteSelected: (NoteEntity?) -> Unit
 ) {
     val search by viewModel.searchQuery.collectAsState()
-
     val navController = rememberNavController()
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-
     val currentRoute = navBackStackEntry?.destination?.route
 
-    Scaffold(floatingActionButton = {
-        if (currentRoute == Screen.NoteListScreen.route) {
-            FloatingActionButton(
-                onClick = {
-                    onNoteSelected(null)
-                }, modifier = Modifier.size(50.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add, null, modifier = Modifier.size(30.dp)
+    Scaffold(
+        floatingActionButton = {
+            if (currentRoute == Screen.NoteListScreen.route) {
+                ExtendedFloatingActionButton(
+                    onClick = { onNoteSelected(null) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = RoundedCornerShape(16.dp),
+                    icon = { Icon(Icons.Default.Add, "Add Note") },
+                    text = { Text("New Note") }
                 )
             }
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            if (currentRoute == Screen.NoteListScreen.route) {
+                TopSearchBar(search = search, viewModel = viewModel)
+            }
+        },
+        bottomBar = {
+            ModernBottomBar(navController)
         }
-    }, modifier = Modifier.fillMaxSize(), containerColor = BackgroundColor, topBar = {
-        Topbar(
-            search = search, viewModel
-        )
-    }, bottomBar = {
-        BottomBar(navController)
-
-    }) { paddingValues ->
+    ) { paddingValues ->
         Box(
-            modifier = Modifier.fillMaxSize().padding(paddingValues)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
             NavHost(
-                modifier = Modifier.padding(15.dp),
                 navController = navController,
                 startDestination = Screen.NoteListScreen.route,
             ) {
                 composable(route = Screen.NoteListScreen.route) {
                     NotesListScreen(
-                        viewModel = viewModel, onEdit = { note ->
-                            onNoteSelected(note)
-                        }
-
+                        viewModel = viewModel,
+                        onEdit = { note -> onNoteSelected(note) }
                     )
                 }
-                composable(
-                    route = Screen.SearchScreen.route
-                ) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        Text("search")
+                composable(route = Screen.SearchScreen.route) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Search feature coming soon", style = MaterialTheme.typography.bodyLarge)
                     }
                 }
-                composable(
-                    route = Screen.AiAssistant.route
-                ) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        Text("Assistant")
+                composable(route = Screen.AiAssistant.route) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("AI Assistant coming soon", style = MaterialTheme.typography.bodyLarge)
                     }
                 }
-                composable(
-                    route = Screen.Setting.route
-                ) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        Text("Setting")
+                composable(route = Screen.Setting.route) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Settings coming soon", style = MaterialTheme.typography.bodyLarge)
                     }
                 }
-
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Topbar(
+fun TopSearchBar(
     search: String, viewModel: NotesListViewModel
 ) {
     val isGridView by viewModel.isGridView.collectAsState()
-    val interactionSource = MutableInteractionSource()
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = BackgroundColor
-        ), title = {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Surface(
+        modifier = Modifier
+            .statusBarsPadding()
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search",
+                modifier = Modifier.padding(end = 8.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
             BasicTextField(
                 value = search,
-                onValueChange = { newValue ->
-                    viewModel.onSearch(newValue)
-                },
-                textStyle = TextStyle(
-                    fontSize = 16.sp, color = PrimaryTextColor
-                ),
-                modifier = Modifier.fillMaxWidth().padding(end = 16.dp).height(44.dp),
+                onValueChange = { viewModel.onSearch(it) },
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 8.dp),
                 interactionSource = interactionSource,
                 singleLine = true,
                 decorationBox = { innerTextField ->
-                    OutlinedTextFieldDefaults.DecorationBox(
-                        value = search,
-                        innerTextField = innerTextField,
-                        enabled = true,
-                        singleLine = true,
-                        visualTransformation = VisualTransformation.None,
-                        interactionSource = interactionSource,
-                        placeholder = {
-                            Text(
-                                "Search notes...", fontSize = 14.sp, color = SecondaryTextColor
-                            )
-                        },
-                        trailingIcon = {
-                            Row (
-                                modifier = Modifier.wrapContentSize(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ){
-                                IconButton(onClick = {
-                                    if (search.isNotEmpty()) viewModel.onSearch("")
-                                }) {
-                                    Icon(
-                                        imageVector = if (search.isEmpty()) Icons.Default.Search else Icons.Default.Close,
-                                        contentDescription = if (search.isEmpty()) "Search" else "Clear search",
-                                        modifier = Modifier.size(26.dp),
-                                        tint = PrimaryColor
-                                    )
-                                }
-
-                                IconButton(onClick = { viewModel.toggleViewMode() }) {
-                                    Icon(
-                                        imageVector = if (isGridView) Icons.Default.GridView else Icons.AutoMirrored.Filled.ViewList,
-                                        contentDescription = "Toggle view mode",
-                                        modifier = Modifier.size(25.dp),
-                                        tint = PrimaryColor
-                                    )
-                                }
-                            }
-                        },
-                        container = {
-                            OutlinedTextFieldDefaults.Container(
-                                enabled = true,
-                                isError = false,
-                                interactionSource = interactionSource,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PrimaryColor,
-                                    unfocusedBorderColor = Transparent,
-                                    focusedContainerColor = White,
-                                    unfocusedContainerColor = White
-                                ),
-                                shape = RoundedCornerShape(12.dp),
-                            )
-                        },
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                    )
-                })
-        },
-
-        navigationIcon = {
-            Box(
-                modifier = Modifier.padding(start = 16.dp, end = 8.dp).size(40.dp)
-                    .background(PrimaryColor, RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Description,
-                    contentDescription = null,
-                    tint = White,
-                    modifier = Modifier.size(20.dp)
-                )
-
-                // Small plus sign overlay
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(4.dp),
-                    contentAlignment = Alignment.BottomEnd
-                ) {
-                    Surface(
-                        color = White,
-                        shape = RoundedCornerShape(2.dp),
-                        modifier = Modifier.size(10.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            tint = PrimaryColor,
-                            modifier = Modifier.padding(1.dp)
+                    if (search.isEmpty()) {
+                        Text(
+                            "Search your notes",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
                     }
+                    innerTextField()
+                }
+            )
+
+            if (search.isNotEmpty()) {
+                IconButton(onClick = { viewModel.onSearch("") }) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Clear search",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
-        })
+            IconButton(onClick = { viewModel.toggleViewMode() }) {
+                Icon(
+                    imageVector = if (isGridView) Icons.Default.GridView else Icons.AutoMirrored.Filled.ViewList,
+                    contentDescription = "Toggle view mode",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+
+        }
+    }
 }
 
 @Composable
-fun BottomBar(
+fun ModernBottomBar(
     navController: NavHostController
 ) {
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-
     val items = remember { getButtonbarItems() }
-
     val currentRoute = navBackStackEntry?.destination?.route
-    Surface(
-        modifier = Modifier,
-        shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        shadowElevation = 6.dp,
-        tonalElevation = 6.dp,
-        color = White
+
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 8.dp
     ) {
+        items.forEach { item ->
+            val isSelected = currentRoute == item.route
 
-        NavigationBar(
-            modifier = Modifier, containerColor = Transparent, // 🔥 important
-            contentColor = Blue, tonalElevation = 0.dp
-        ) {
-            items.forEach { item ->
-                val isSelected = currentRoute == item.route
-
-                NavigationBarItem(
-                    modifier = Modifier.padding(10.dp),
-                    selected = isSelected,
-                    onClick = {
-                        if (!isSelected) {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.startDestinationRoute.toString()) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
+            NavigationBarItem(
+                selected = isSelected,
+                onClick = {
+                    if (!isSelected) {
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationRoute.toString()) {
+                                saveState = true
                             }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                    },
-                    icon = {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.weight(1f).padding(2.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                modifier = Modifier.size(20.dp),
-                                contentDescription = item.title
-                            )
-
-                            Spacer(modifier = Modifier.height(2.dp))
-
-                            Text(
-                                text = item.title, fontSize = 12.sp
-                            )
-                        }
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = SecondaryColor,
-                        unselectedIconColor = Black,
-                        indicatorColor = SecondaryColor.copy(alpha = 0.3f)
+                    }
+                },
+                icon = {
+                    Icon(
+                        imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                        contentDescription = item.title
                     )
+                },
+                label = {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
                 )
-            }
+            )
         }
     }
 }
