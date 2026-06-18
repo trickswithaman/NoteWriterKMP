@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -28,6 +30,8 @@ import com.notewriterkmp.notiq.domain.model.getButtonbarItems
 import com.notewriterkmp.notiq.notiq.navigation.Screens.Screen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
+import com.notewriterkmp.notiq.notiq.presentation.SettingScreen.SettingScreen
+import notewriterkmp.shared.generated.resources.Res
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +60,28 @@ fun BottomNavigation(
         topBar = {
             if (currentRoute == Screen.NoteListScreen.route) {
                 TopSearchBar(search = search, viewModel = viewModel)
+            } else {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "Notiq Notes",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(
+                          onClick = {}
+                        ){
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "",
+                                modifier = Modifier.size(25.dp).padding(2.dp)
+                            )
+                        }
+                    },
+                )
             }
+
         },
         bottomBar = {
             ModernBottomBar(navController)
@@ -88,9 +113,7 @@ fun BottomNavigation(
                     }
                 }
                 composable(route = Screen.Setting.route) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Settings coming soon", style = MaterialTheme.typography.bodyLarge)
-                    }
+                    SettingScreen()
                 }
             }
         }
