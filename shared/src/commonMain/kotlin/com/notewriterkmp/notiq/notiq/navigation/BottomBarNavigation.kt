@@ -61,25 +61,7 @@ fun BottomNavigation(
             if (currentRoute == Screen.NoteListScreen.route) {
                 TopSearchBar(search = search, viewModel = viewModel)
             } else {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Notiq Notes",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(
-                          onClick = {}
-                        ){
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "",
-                                modifier = Modifier.size(25.dp).padding(2.dp)
-                            )
-                        }
-                    },
-                )
+                NormalTopBar()
             }
 
         },
@@ -116,6 +98,42 @@ fun BottomNavigation(
                     SettingScreen()
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun NormalTopBar() {
+    Surface(
+        modifier = Modifier
+            .statusBarsPadding()
+            .fillMaxWidth(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            IconButton(
+                onClick = {}
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(2.dp)
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "Notiq",
+                style = MaterialTheme.typography.titleLarge,
+            )
         }
     }
 }
