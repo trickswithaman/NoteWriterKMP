@@ -57,136 +57,134 @@ fun SettingScreen() {
     var selectedTheme by remember { mutableStateOf("System Default") }
     val themeOptions = listOf("Light", "Dark", "System Default")
 
-    Scaffold() { paddingValues ->
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    )
+    {
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Profile Section
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .size(100.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
+                .border(
+                    width = 2.dp,
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                ),
         ) {
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Profile Section
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
-                    .border(
-                        width = 2.dp,
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                    ),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            Spacer(modifier = Modifier.size(16.dp))
-
-            Text(
-                "Modern User",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
-            Text(
-                "modernUser@gmail.com",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        }
+        Spacer(modifier = Modifier.size(16.dp))
+
+        Text(
+            "Modern User",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            "modernUser@gmail.com",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.size(32.dp))
+
+        // Settings Sections
+        SettingSection(title = "Account") {
+            SettingItem(
+                icon = Icons.Default.AccountCircle,
+                title = "Personal Info",
+                subtitle = "Name, email, and more"
+            )
+            SettingItem(
+                icon = Icons.Default.Notifications,
+                title = "Notifications",
+                subtitle = "Sound, vibration, and alerts"
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        SettingSection(title = "App Preferences") {
+            SettingItem(
+                icon = Icons.Default.Palette,
+                title = "Theme",
+                subtitle = "Selected: $selectedTheme",
+                onClick = { /* Could toggle expansion here */ }
             )
 
-            Spacer(modifier = Modifier.size(32.dp))
-
-            // Settings Sections
-            SettingSection(title = "Account") {
-                SettingItem(
-                    icon = Icons.Default.AccountCircle,
-                    title = "Personal Info",
-                    subtitle = "Name, email, and more"
-                )
-                SettingItem(
-                    icon = Icons.Default.Notifications,
-                    title = "Notifications",
-                    subtitle = "Sound, vibration, and alerts"
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SettingSection(title = "App Preferences") {
-                SettingItem(
-                    icon = Icons.Default.Palette,
-                    title = "Theme",
-                    subtitle = "Selected: $selectedTheme",
-                    onClick = { /* Could toggle expansion here */ }
-                )
-                
-                Column(modifier = Modifier.padding(bottom = 8.dp)) {
-                    themeOptions.forEach { option ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { selectedTheme = option }
-                                .padding(horizontal = 16.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = (option == selectedTheme),
-                                onClick = { selectedTheme = option }
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = option,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+            Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                themeOptions.forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedTheme = option }
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (option == selectedTheme),
+                            onClick = { selectedTheme = option }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = option,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
-
-                SettingItem(
-                    icon = Icons.Default.Translate,
-                    title = "Language",
-                    subtitle = "Choose your preferred language"
-                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SettingSection(title = "Support") {
-                SettingItem(
-                    icon = Icons.AutoMirrored.Filled.HelpOutline,
-                    title = "Help Center",
-                    subtitle = "FAQs and support"
-                )
-                SettingItem(
-                    icon = Icons.Default.Info,
-                    title = "About",
-                    subtitle = "Version 1.0.0"
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            OutlinedButton(
-                onClick = { /* Handle logout */ },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Sign Out", fontWeight = FontWeight.Bold)
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
+            SettingItem(
+                icon = Icons.Default.Translate,
+                title = "Language",
+                subtitle = "Choose your preferred language"
+            )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        SettingSection(title = "Support") {
+            SettingItem(
+                icon = Icons.AutoMirrored.Filled.HelpOutline,
+                title = "Help Center",
+                subtitle = "FAQs and support"
+            )
+            SettingItem(
+                icon = Icons.Default.Info,
+                title = "About",
+                subtitle = "Version 1.0.0"
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        OutlinedButton(
+            onClick = { /* Handle logout */ },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.error
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Sign Out", fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
