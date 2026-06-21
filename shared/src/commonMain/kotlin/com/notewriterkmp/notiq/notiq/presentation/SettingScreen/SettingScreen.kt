@@ -79,12 +79,7 @@ fun SettingScreen() {
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                 ),
         ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+
         }
         Spacer(modifier = Modifier.size(16.dp))
 
