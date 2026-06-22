@@ -39,6 +39,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,12 +50,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showSystemUi = true)
 @Composable
 fun SettingScreen() {
-    var selectedTheme by remember { mutableStateOf("System Default") }
+    val viewModel = koinViewModel<SettingsViewModel>()
+    val selectedTheme by viewModel.selectedTheme.collectAsState()
     var showThemeDialog by remember { mutableStateOf(false) }
     val themeOptions = listOf("Light", "Dark", "System Default")
 
@@ -74,7 +77,7 @@ fun SettingScreen() {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    selectedTheme = option
+                                    viewModel.setTheme(option)
                                     showThemeDialog = false
                                 }
                                 .padding(vertical = 12.dp),
@@ -83,7 +86,7 @@ fun SettingScreen() {
                             RadioButton(
                                 selected = (option == selectedTheme),
                                 onClick = {
-                                    selectedTheme = option
+                                    viewModel.setTheme(option)
                                     showThemeDialog = false
                                 }
                             )
