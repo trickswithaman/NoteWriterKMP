@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,9 +36,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,7 +55,54 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SettingScreen() {
     var selectedTheme by remember { mutableStateOf("System Default") }
+    var showThemeDialog by remember { mutableStateOf(false) }
     val themeOptions = listOf("Light", "Dark", "System Default")
+
+    if (showThemeDialog) {
+        AlertDialog(
+            onDismissRequest = { showThemeDialog = false },
+            title = {
+                Text(
+                    text = "Select Theme",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            },
+            text = {
+                Column {
+                    themeOptions.forEach { option ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedTheme = option
+                                    showThemeDialog = false
+                                }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = (option == selectedTheme),
+                                onClick = {
+                                    selectedTheme = option
+                                    showThemeDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = option,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showThemeDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -122,30 +169,8 @@ fun SettingScreen() {
                 icon = Icons.Default.Palette,
                 title = "Theme",
                 subtitle = "Selected: $selectedTheme",
-                onClick = { /* Could toggle expansion here */ }
+                onClick = { showThemeDialog = true }
             )
-
-            Column(modifier = Modifier.padding(bottom = 8.dp)) {
-                themeOptions.forEach { option ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedTheme = option }
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = (option == selectedTheme),
-                            onClick = { selectedTheme = option }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = option,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
 
             SettingItem(
                 icon = Icons.Default.Translate,
