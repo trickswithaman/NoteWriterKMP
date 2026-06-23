@@ -39,7 +39,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,7 +57,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun SettingScreen() {
     val viewModel = koinViewModel<SettingsViewModel>()
-    val selectedTheme by viewModel.selectedTheme.collectAsState()
+    val selectedTheme by viewModel.selectedTheme.collectAsStateWithLifecycle()
     var showThemeDialog by remember { mutableStateOf(false) }
     val themeOptions = listOf("Light", "Dark", "System Default")
 

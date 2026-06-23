@@ -2,7 +2,7 @@ package com.notewriterkmp
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
 import com.notewriterkmp.notiq.notiq.ui.theme.NoteWriterTheme
@@ -15,7 +15,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Preview
 fun App() {
     val settingsViewModel = koinViewModel<SettingsViewModel>()
-    val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
+    val selectedTheme by settingsViewModel.selectedTheme.collectAsStateWithLifecycle()
 
     val darkTheme = when (selectedTheme) {
         "Light" -> false

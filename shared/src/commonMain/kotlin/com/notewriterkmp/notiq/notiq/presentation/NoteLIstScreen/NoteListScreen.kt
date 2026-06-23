@@ -21,15 +21,14 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,7 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notewriterkmp.db.NoteEntity
 import com.notewriterkmp.notiq.notiq.util.UiState
 import com.notewriterkmp.notiq.notiq.util.renderMarkdown
@@ -49,8 +48,8 @@ import kotlin.time.Instant
 fun NotesListScreen(
     viewModel: NotesListViewModel, onEdit: (NoteEntity) -> Unit
 ) {
-    val notesState by viewModel.notes.collectAsState()
-    val isGridView by viewModel.isGridView.collectAsState()
+    val notesState by viewModel.notes.collectAsStateWithLifecycle()
+    val isGridView by viewModel.isGridView.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (val state = notesState) {
@@ -60,6 +59,7 @@ fun NotesListScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+
             is UiState.Success -> {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(if (isGridView) 2 else 1),
@@ -77,6 +77,7 @@ fun NotesListScreen(
                     }
                 }
             }
+
             is UiState.Error -> {
                 Column(
                     modifier = Modifier.align(Alignment.Center).padding(24.dp),
@@ -93,6 +94,7 @@ fun NotesListScreen(
                     }
                 }
             }
+
             is UiState.Empty -> {
                 Column(
                     modifier = Modifier.align(Alignment.Center),
@@ -139,14 +141,16 @@ fun NoteItem(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onEditNote),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.outlinedCardColors(
-            containerColor = if (note.isPinned == true) 
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f) 
-            else 
-                MaterialTheme.colorScheme.surface
+            containerColor = if (note.isPinned == true) MaterialTheme.colorScheme.primaryContainer.copy(
+                alpha = 0.7f
+            )
+            else MaterialTheme.colorScheme.surface
         ),
         border = CardDefaults.outlinedCardBorder().copy(
             brush = androidx.compose.ui.graphics.SolidColor(
-                if (note.isPinned == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                if (note.isPinned == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(
+                    alpha = 0.5f
+                )
             )
         )
     ) {
@@ -183,7 +187,9 @@ fun NoteItem(
             Text(
                 text = renderedContent,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (note.isPinned == true) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (note.isPinned == true) MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                    alpha = 0.8f
+                ) else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = if (isGridView) 4 else 3,
                 overflow = TextOverflow.Ellipsis
             )
@@ -201,8 +207,7 @@ fun NoteItem(
                     color = MaterialTheme.colorScheme.outline
                 )
                 IconButton(
-                    onClick = onDeleteNote,
-                    modifier = Modifier.size(32.dp)
+                    onClick = onDeleteNote, modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,
@@ -221,8 +226,7 @@ fun formatDate(timestamp: Long): String {
     val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
 
     val monthNames = listOf(
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     )
 
     return "${localDateTime.dayOfMonth} ${monthNames[localDateTime.monthNumber - 1]} ${localDateTime.year}"
