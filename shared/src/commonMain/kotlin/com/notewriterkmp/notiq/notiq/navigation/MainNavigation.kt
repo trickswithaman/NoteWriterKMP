@@ -3,8 +3,8 @@ package com.notewriterkmp.notiq.notiq.navigation
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -23,7 +23,7 @@ import com.notewriterkmp.notiq.notiq.presentation.SplashScreen.SplashScreen
 fun MainNavigation(
     viewModel: NotesListViewModel
 ) {
-    val notesState by viewModel.notes.collectAsState()
+    val notesState by viewModel.notes.collectAsStateWithLifecycle()
     val notes = if (notesState is UiState.Success) (notesState as UiState.Success).data else emptyList()
 
     MainNavigationContent(notes = notes, splashScreen = { onNavigate ->
