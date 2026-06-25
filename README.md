@@ -9,7 +9,8 @@ NoteWriterKMP is a modern, cross-platform note-taking application built using **
 - **Notes Management**: Create, edit, and delete notes with ease.
 - **Real-time Search**: Quickly find notes with an integrated top search bar.
 - **Flexible View Modes**: Seamlessly toggle between Grid and List layouts.
-- **Modern UI/UX**: Built with Material 3, featuring a modern bottom navigation bar and smooth splash screen animations.
+- **Dynamic Theming**: Support for Light, Dark, and System Default themes, persisted across sessions.
+- **Modern UI/UX**: Built with Material 3, featuring smooth animations and a consistent design language.
 - **AI Assistant**: Dedicated space for upcoming AI-powered note-taking features (In Progress).
 - **Local Persistence**: Reliable offline storage using SQLDelight.
 
@@ -17,12 +18,12 @@ NoteWriterKMP is a modern, cross-platform note-taking application built using **
 
 - **Kotlin Multiplatform**: Core business logic sharing.
 - **Compose Multiplatform**: Declarative UI for both platforms.
-- **SQLDelight**: Type-safe local database.
+- **SQLDelight**: Type-safe local database for structured data.
 - **Koin**: Dependency injection for shared and platform-specific modules.
-- **Navigation Compose**: Modern, type-safe navigation.
+- **Navigation Compose**: Modern, type-safe navigation for Multiplatform.
 - **KotlinX Coroutines**: Efficient background processing.
 - **KotlinX Serialization & Datetime**: Robust data handling and time management.
-- **Multiplatform Settings**: Persistent key-value storage.
+- **Multiplatform Settings**: Persistent key-value storage for app preferences.
 
 ## 📂 Project Structure
 
