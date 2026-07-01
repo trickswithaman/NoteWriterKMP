@@ -50,6 +50,7 @@ import com.notewriterkmp.notiq.domain.model.getButtonbarItems
 import com.notewriterkmp.notiq.notiq.navigation.Screens.Screen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
 import com.notewriterkmp.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
+import com.notewriterkmp.notiq.notiq.presentation.SearchScreen.SearchScreen
 import com.notewriterkmp.notiq.notiq.presentation.SettingScreen.SettingScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +74,7 @@ fun BottomNavigation(
                 text = { Text("New Note") })
         }
     }, containerColor = MaterialTheme.colorScheme.background, topBar = {
-        if (currentRoute == Screen.NoteListScreen.route) {
+        if (currentRoute == Screen.NoteListScreen.route || currentRoute == Screen.SearchScreen.route) {
             TopSearchBar(search = search, viewModel = viewModel)
         } else {
             NormalTopBar()
@@ -94,12 +95,10 @@ fun BottomNavigation(
                         viewModel = viewModel, onEdit = { note -> onNoteSelected(note) })
                 }
                 composable(route = Screen.SearchScreen.route) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            "Search feature coming soon",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
+                    SearchScreen(
+                        viewModel = viewModel,
+                        onNoteClick = { note -> onNoteSelected(note) }
+                    )
                 }
                 composable(route = Screen.AiAssistant.route) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
