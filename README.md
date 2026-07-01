@@ -5,11 +5,15 @@ NoteWriterKMP is a modern, cross-platform note-taking application built using **
 ## 🚀 Features
 
 - **Cross-Platform**: Shared logic and UI across Android and iOS.
+- **Markdown Support**: Rich text rendering for notes using Markdown, making your thoughts more expressive.
+- **Rotary Lock Screen**: A unique, nostalgic rotary phone-style passcode lock screen for enhanced security (Experimental).
 - **Auto-save**: Never lose a thought; notes are saved automatically as you type.
 - **Notes Management**: Create, edit, and delete notes with ease.
 - **Real-time Search**: Quickly find notes with an integrated top search bar.
 - **Flexible View Modes**: Seamlessly toggle between Grid and List layouts.
 - **Dynamic Theming**: Support for Light, Dark, and System Default themes, persisted across sessions.
+- **Enhanced Settings**: A comprehensive settings hub for profile management and app preferences.
+- **Animated Splash Screen**: A smooth, branded entry experience.
 - **Modern UI/UX**: Built with Material 3, featuring smooth animations and a consistent design language.
 - **AI Assistant**: Dedicated space for upcoming AI-powered note-taking features (In Progress).
 - **Local Persistence**: Reliable offline storage using SQLDelight.
@@ -24,6 +28,7 @@ NoteWriterKMP is a modern, cross-platform note-taking application built using **
 - **KotlinX Coroutines**: Efficient background processing.
 - **KotlinX Serialization & Datetime**: Robust data handling and time management.
 - **Multiplatform Settings**: Persistent key-value storage for app preferences.
+- **Platform-Specific Utils**: Shared abstractions for UUID generation and system integrations.
 
 ## 📂 Project Structure
 
