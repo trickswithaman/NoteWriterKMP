@@ -21,7 +21,7 @@ kotlin {
     }
     
     androidLibrary {
-       namespace = "com.notewriterkmp.shared"
+       namespace = "com.notiq.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
     
@@ -66,7 +66,6 @@ kotlin {
             // Serialization
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
 
             implementation(libs.multiplatform.settings.no.arg)
 
@@ -96,7 +95,8 @@ kotlin {
 sqldelight {
     databases {
         create("NotesDatabase") {
-            packageName.set("com.notewriterkmp.db")
+            packageName.set("com.notiq.db")
+            dialect(libs.sqldelight.sqlite.dialect)
         }
     }
 }

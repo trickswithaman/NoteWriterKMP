@@ -1,4 +1,4 @@
-rootProject.name = "NoteWriterKMP"
+rootProject.name = "Notiq"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

@@ -21,11 +21,11 @@ dependencies {
 }
 
 android {
-    namespace = "com.notewriterkmp"
+    namespace = "com.notiq"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.notewriterkmp"
+        applicationId = "com.notiq"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
