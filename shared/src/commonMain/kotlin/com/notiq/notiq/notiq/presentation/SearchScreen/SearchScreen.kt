@@ -33,7 +33,7 @@ import com.notiq.notiq.notiq.util.UiState
 fun SearchScreen(
     viewModel: NotesListViewModel,
     onNoteClick: (NoteEntity) -> Unit
-) {
+) {/*
     val notesState by viewModel.notes.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val isGridView by viewModel.isGridView.collectAsStateWithLifecycle()
@@ -80,7 +80,7 @@ fun SearchScreen(
                 }
             }
         }
-    }
+    }*/
 }
 
 @Composable
