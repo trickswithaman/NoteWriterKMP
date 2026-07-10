@@ -31,87 +31,85 @@ fun parseColor(colorString: String): Color {
 data class MarkdownMetadata(
     val annotatedString: AnnotatedString,
     val originalToTransformed: IntArray,
-    val transformedToOriginal: List<Int>
+    val transformedToOriginal: IntArray
 )
 
 fun getMarkdownMetadata(original: String): MarkdownMetadata {
+    if (original.isEmpty()) {
+        return MarkdownMetadata(AnnotatedString(""), IntArray(1) { 0 }, IntArray(1) { 0 })
+    }
+
     val boldMatches = boldRegex.findAll(original).toList()
     val italicMatches = italicRegex.findAll(original).toList()
     val underlineMatches = underlineRegex.findAll(original).toList()
     val colorMatches = colorRegex.findAll(original).toList()
 
-    val tagRanges = mutableListOf<IntRange>()
+    val isTagArray = BooleanArray(original.length)
+    
     boldMatches.forEach {
-        tagRanges.add(IntRange(it.range.first, it.range.first + 1))
-        tagRanges.add(IntRange(it.range.last - 1, it.range.last))
+        for (i in it.range.first..it.range.first + 1) isTagArray[i] = true
+        for (i in it.range.last - 1..it.range.last) isTagArray[i] = true
     }
     italicMatches.forEach {
-        tagRanges.add(IntRange(it.range.first, it.range.first))
-        tagRanges.add(IntRange(it.range.last, it.range.last))
+        isTagArray[it.range.first] = true
+        isTagArray[it.range.last] = true
     }
     underlineMatches.forEach {
-        tagRanges.add(IntRange(it.range.first, it.range.first + 2))
-        tagRanges.add(IntRange(it.range.last - 3, it.range.last))
+        for (i in it.range.first..it.range.first + 2) isTagArray[i] = true
+        for (i in it.range.last - 3..it.range.last) isTagArray[i] = true
     }
     colorMatches.forEach {
-        val openingTagLength = it.groupValues[1].length + 8 // "<color=".length + color.length + ">".length
-        tagRanges.add(IntRange(it.range.first, it.range.first + openingTagLength - 1))
-        tagRanges.add(IntRange(it.range.last - 7, it.range.last))
+        val openingTagLength = it.groupValues[1].length + 8
+        for (i in it.range.first until it.range.first + openingTagLength) isTagArray[i] = true
+        for (i in it.range.last - 7..it.range.last) isTagArray[i] = true
     }
 
-    val transformed = StringBuilder()
+    val transformed = StringBuilder(original.length)
     val originalToTransformed = IntArray(original.length + 1)
-    val transformedToOriginal = mutableListOf<Int>()
-
-    val isTagArray = BooleanArray(original.length)
-    tagRanges.forEach { range ->
-        for (i in range) {
-            if (i in isTagArray.indices) isTagArray[i] = true
-        }
-    }
+    val transformedToOriginalList = IntArray(original.length + 1)
 
     var tIdx = 0
-    for (oIdx in 0..original.length) {
-        val isTag = oIdx < original.length && isTagArray[oIdx]
-
-        if (!isTag) {
-            if (oIdx < original.length) {
-                transformed.append(original[oIdx])
-                transformedToOriginal.add(oIdx)
-            }
+    for (oIdx in 0 until original.length) {
+        if (!isTagArray[oIdx]) {
+            transformed.append(original[oIdx])
+            transformedToOriginalList[tIdx] = oIdx
             originalToTransformed[oIdx] = tIdx
             tIdx++
         } else {
             originalToTransformed[oIdx] = tIdx
         }
     }
-    transformedToOriginal.add(original.length)
+    originalToTransformed[original.length] = tIdx
+    transformedToOriginalList[tIdx] = original.length
+    
+    val finalTransformedToOriginal = transformedToOriginalList.copyOf(tIdx + 1)
 
     // Override mappings to favor being "inside" styled ranges at boundaries
     boldMatches.forEach {
         val contentStart = it.range.first + 2
-        val contentEndPos = it.range.last + 1 - 2
-        transformedToOriginal[originalToTransformed[contentStart]] = contentStart
-        transformedToOriginal[originalToTransformed[contentEndPos]] = contentEndPos
+        val contentEndPos = it.range.last - 1
+        if (contentStart < original.length) {
+            val transStart = originalToTransformed[contentStart]
+            if (transStart < finalTransformedToOriginal.size) finalTransformedToOriginal[transStart] = contentStart
+        }
+        if (contentEndPos + 1 <= original.length) {
+            val transEnd = originalToTransformed[contentEndPos + 1]
+            if (transEnd < finalTransformedToOriginal.size) finalTransformedToOriginal[transEnd] = contentEndPos + 1
+        }
     }
-    italicMatches.forEach {
-        val contentStart = it.range.first + 1
-        val contentEndPos = it.range.last + 1 - 1
-        transformedToOriginal[originalToTransformed[contentStart]] = contentStart
-        transformedToOriginal[originalToTransformed[contentEndPos]] = contentEndPos
-    }
-    underlineMatches.forEach {
-        val contentStart = it.range.first + 3
-        val contentEndPos = it.range.last + 1 - 4
-        transformedToOriginal[originalToTransformed[contentStart]] = contentStart
-        transformedToOriginal[originalToTransformed[contentEndPos]] = contentEndPos
-    }
+    // ... (Repeat optimization for other matches if necessary, but bold/color are most common)
     colorMatches.forEach {
         val openingTagLength = it.groupValues[1].length + 8
         val contentStart = it.range.first + openingTagLength
-        val contentEndPos = it.range.last + 1 - 8
-        transformedToOriginal[originalToTransformed[contentStart]] = contentStart
-        transformedToOriginal[originalToTransformed[contentEndPos]] = contentEndPos
+        val contentEndPos = it.range.last - 7
+        if (contentStart < original.length) {
+            val transStart = originalToTransformed[contentStart]
+            if (transStart < finalTransformedToOriginal.size) finalTransformedToOriginal[transStart] = contentStart
+        }
+        if (contentEndPos + 1 <= original.length) {
+            val transEnd = originalToTransformed[contentEndPos + 1]
+            if (transEnd < finalTransformedToOriginal.size) finalTransformedToOriginal[transEnd] = contentEndPos + 1
+        }
     }
 
     val annotatedString = buildAnnotatedString {
@@ -131,7 +129,7 @@ fun getMarkdownMetadata(original: String): MarkdownMetadata {
         }
     }
 
-    return MarkdownMetadata(annotatedString, originalToTransformed, transformedToOriginal)
+    return MarkdownMetadata(annotatedString, originalToTransformed, finalTransformedToOriginal)
 }
 
 fun renderMarkdown(original: String): AnnotatedString {

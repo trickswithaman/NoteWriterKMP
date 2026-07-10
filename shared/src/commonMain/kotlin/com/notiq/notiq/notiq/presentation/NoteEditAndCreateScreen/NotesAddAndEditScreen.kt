@@ -329,8 +329,13 @@ fun StyleToolbar(
 }
 
 class MarkdownVisualTransformation : VisualTransformation {
+    private var lastText: String? = null
+    private var lastResult: TransformedText? = null
+
     override fun filter(text: AnnotatedString): TransformedText {
         val original = text.text
+        if (original == lastText && lastResult != null) return lastResult!!
+
         val metadata = getMarkdownMetadata(original)
 
         val mapping = object : OffsetMapping {
@@ -340,7 +345,10 @@ class MarkdownVisualTransformation : VisualTransformation {
                 metadata.transformedToOriginal[offset.coerceIn(0, metadata.annotatedString.length)]
         }
 
-        return TransformedText(metadata.annotatedString, mapping)
+        val result = TransformedText(metadata.annotatedString, mapping)
+        lastText = original
+        lastResult = result
+        return result
     }
 }
 
