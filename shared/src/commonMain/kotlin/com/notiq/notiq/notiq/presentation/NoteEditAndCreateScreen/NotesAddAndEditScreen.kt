@@ -40,6 +40,7 @@ import com.notiq.notiq.notiq.util.boldRegex
 import com.notiq.notiq.notiq.util.colorRegex
 import com.notiq.notiq.notiq.util.getMarkdownMetadata
 import com.notiq.notiq.notiq.util.italicRegex
+import com.notiq.notiq.notiq.util.lineHeightRegex
 import com.notiq.notiq.notiq.util.underlineRegex
 import kotlinx.coroutines.delay
 
@@ -215,12 +216,15 @@ fun StyleToolbar(
     if (!isKeyboardVisible) return
 
     var showColorPicker by remember { mutableStateOf(false) }
+    var showLineSpacingPicker by remember { mutableStateOf(false) }
+    
     val availableColors = remember {
         listOf(
             "#000000", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF",
             "#FFA500", "#800080", "#A52A2A", "#808080", "#FFFFFF"
         )
     }
+    val lineSpacingOptions = remember { listOf(1.0f, 1.2f, 1.5f, 1.8f, 2.0f) }
 
     val currentVal = if (lastFocusedField == 0) titleValue else contentValue
     val onValChange = if (lastFocusedField == 0) onTitleValueChange else onContentValueChange
@@ -259,6 +263,30 @@ fun StyleToolbar(
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
             }
 
+            if (showLineSpacingPicker) {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    items(lineSpacingOptions) { spacing ->
+                        Text(
+                            text = "${spacing}x",
+                            modifier = Modifier
+                                .clickable {
+                                    val newValue = toggleStyle(currentVal, "<lh=$spacing>", "</lh>")
+                                    onValChange(newValue)
+                                    showLineSpacingPicker = false
+                                }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
@@ -282,7 +310,7 @@ fun StyleToolbar(
                         isStyleActive(currentVal, "_"),
                         isStyleActive(currentVal, "<u>"),
                         false, // Photo
-                        false, // FormatLineSpacing
+                        isStyleActive(currentVal, "<lh="), // FormatLineSpacing
                         isStyleActive(currentVal, "<color="), // FormatColorText
                         false // Mic
                     )
@@ -297,6 +325,23 @@ fun StyleToolbar(
                                 0 -> onValChange(toggleStyle(currentVal, "**", "**"))
                                 1 -> onValChange(toggleStyle(currentVal, "_", "_"))
                                 2 -> onValChange(toggleStyle(currentVal, "<u>", "</u>"))
+                                4 -> {
+                                    if (isSelected) {
+                                        val match = lineHeightRegex.findAll(currentVal.text).find { 
+                                            currentVal.selection.min >= it.range.first && currentVal.selection.max <= it.range.last + 1 
+                                        }
+                                        if (match != null) {
+                                            val spacing = match.groupValues[1]
+                                            onValChange(toggleStyle(currentVal, "<lh=$spacing>", "</lh>"))
+                                        } else {
+                                            showLineSpacingPicker = !showLineSpacingPicker
+                                            showColorPicker = false
+                                        }
+                                    } else {
+                                        showLineSpacingPicker = !showLineSpacingPicker
+                                        showColorPicker = false
+                                    }
+                                }
                                 5 -> {
                                     if (isSelected) {
                                         val match = colorRegex.findAll(currentVal.text).find { 
@@ -307,9 +352,11 @@ fun StyleToolbar(
                                             onValChange(toggleStyle(currentVal, "<color=$colorHex>", "</color>"))
                                         } else {
                                             showColorPicker = !showColorPicker
+                                            showLineSpacingPicker = false
                                         }
                                     } else {
                                         showColorPicker = !showColorPicker
+                                        showLineSpacingPicker = false
                                     }
                                 }
                                 else -> {}
@@ -360,6 +407,7 @@ private fun isStyleActive(value: TextFieldValue, prefix: String): Boolean {
         prefix == "_" -> italicRegex
         prefix == "<u>" -> underlineRegex
         prefix.startsWith("<color=") -> colorRegex
+        prefix.startsWith("<lh=") -> lineHeightRegex
         else -> return false
     }
     return regex.findAll(text).any { 
@@ -378,6 +426,7 @@ private fun toggleStyle(value: TextFieldValue, prefix: String, suffix: String): 
         prefix == "_" -> italicRegex
         prefix == "<u>" -> underlineRegex
         prefix.startsWith("<color=") -> colorRegex
+        prefix.startsWith("<lh=") -> lineHeightRegex
         else -> return value
     }
 
@@ -388,11 +437,11 @@ private fun toggleStyle(value: TextFieldValue, prefix: String, suffix: String): 
             return value.copy(selection = TextRange(match.range.last + 1))
         }
 
-        val openingTagLength = if (regex == colorRegex) match.groupValues[1].length + 8 else prefix.length
-        val closingTagLength = if (regex == colorRegex) 8 else suffix.length
+        val openingTagLength = if (regex == colorRegex || regex == lineHeightRegex) match.groupValues[1].length + (if (regex == colorRegex) 8 else 5) else prefix.length
+        val closingTagLength = if (regex == colorRegex || regex == lineHeightRegex) (if (regex == colorRegex) 8 else 5) else suffix.length
 
-        // If it's a different color, replace it instead of just unwrapping
-        if (regex == colorRegex && !match.value.startsWith(prefix)) {
+        // If it's a different value (color or line height), replace it instead of just unwrapping
+        if ((regex == colorRegex || regex == lineHeightRegex) && !match.value.startsWith(prefix)) {
             val unwrapped = match.value.substring(openingTagLength, match.value.length - closingTagLength)
             val wrapped = prefix + unwrapped + suffix
             val newText = text.replaceRange(match.range.first, match.range.last + 1, wrapped)
