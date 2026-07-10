@@ -82,7 +82,6 @@ fun SearchScreen(
         }
     }
 }
-
 @Composable
 fun SearchPlaceholder() {
     Column(
