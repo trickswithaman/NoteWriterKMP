@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.savedstate.read
 import com.notiq.db.NoteEntity
 import com.notiq.notiq.notiq.navigation.Screens.Screen
 import com.notiq.notiq.notiq.util.UiState
@@ -93,7 +94,7 @@ fun MainNavigationContent(
                 type = NavType.StringType
             })
         ) { backStackEntry ->
-            val noteId = backStackEntry.arguments?.getString("noteId") ?: ""
+            val noteId = backStackEntry.arguments?.read { getString("noteId") } ?: ""
             val note = notes.find { it.id == noteId }
 
             noteDetailsScreen(note) {
