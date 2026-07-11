@@ -17,6 +17,10 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "Shared"
             isStatic = true
+            linkerOpts("-lsqlite3")
+        }
+        iosTarget.compilerOptions {
+            freeCompilerArgs.add("-Xoverride-konan-properties=apple.sdk.minVersion=18.2")
         }
     }
     
@@ -71,11 +75,16 @@ kotlin {
 
             implementation("org.jetbrains.androidx.core:core-bundle:1.1.0-alpha03")
             // Navigation
+            //navigation
+            implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.jetbrains.compose.navigation)
+
 //            implementation(libs.navigation.compose)
+
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0")
 //navigation
 //            implementation(libs.androidx.lifecycle.viewmodel)
-//            implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(libs.jetbrains.compose.navigation)
+          //  implementation(libs.jetbrains.compose.navigation)
             // Icons
             implementation(compose.materialIconsExtended)
         }
