@@ -94,7 +94,7 @@ fun MainNavigationContent(
                 type = NavType.StringType
             })
         ) { backStackEntry ->
-            val noteId = backStackEntry.arguments?.read { getString("noteId") } ?: ""
+            val noteId = backStackEntry.arguments?.j { getString("noteId") } ?: ""
             val note = notes.find { it.id == noteId }
 
             noteDetailsScreen(note) {
