@@ -81,17 +81,24 @@ fun NoteAddAndEditScreen(
         if (currentNote == null && titleValue.text.isBlank() && contentValue.text.isBlank()) return@LaunchedEffect
 
         delay(500L)
-        viewModel.saveNote(currentNote, titleValue.text, contentValue.text, isPinned, onSuccess = { savedNote ->
+        
+        val cleanTitle = com.notiq.notiq.notiq.util.cleanEmptyTags(titleValue.text)
+        val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
+        
+        viewModel.saveNote(currentNote, cleanTitle, cleanContent, isPinned, onSuccess = { savedNote ->
             currentNote = savedNote
         })
     }
 
     val handleBack = {
-        if (titleValue.text != (currentNote?.title ?: "") ||
-            contentValue.text != (currentNote?.content ?: "") ||
+        val cleanTitle = com.notiq.notiq.notiq.util.cleanEmptyTags(titleValue.text)
+        val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
+        
+        if (cleanTitle != (currentNote?.title ?: "") ||
+            cleanContent != (currentNote?.content ?: "") ||
             isPinned != (currentNote?.isPinned ?: false)
         ) {
-            viewModel.saveNote(currentNote, titleValue.text, contentValue.text, isPinned)
+            viewModel.saveNote(currentNote, cleanTitle, cleanContent, isPinned)
         }
         onBack()
     }
@@ -126,39 +133,45 @@ fun NoteAddAndEditContent(
     var lastFocusedField by remember { mutableIntStateOf(-1) } // -1 for none, 0 for title, 1 for content
 
     fun onTextValueChange(oldValue: TextFieldValue, newValue: TextFieldValue, update: (TextFieldValue) -> Unit) {
-        if (newValue.text == oldValue.text && newValue.selection == oldValue.selection) return
+        if (newValue.text == oldValue.text && newValue.selection == oldValue.selection) {
+            update(newValue)
+            return
+        }
         
         var finalValue = newValue
+        
+        // Cleanup empty tags on deletion or when the cursor moves into/out of them
         if (newValue.text.length < oldValue.text.length) {
             val text = newValue.text
             val sel = newValue.selection
             if (sel.collapsed) {
                 val cursor = sel.start
                 
-                // Helper to check and remove empty tags
-                fun tryRemoveEmptyTag(regex: Regex, openingLen: Int, closingLen: Int): Boolean {
-                    val match = regex.findAll(text).find { 
-                        it.range.last - it.range.first + 1 == openingLen + closingLen && 
-                        cursor >= it.range.first && cursor <= it.range.last + 1
+                fun findAndRemoveEmptyTag(): Boolean {
+                    val regexes = listOf(boldRegex to Pair(2, 2), italicRegex to Pair(1, 1), underlineRegex to Pair(3, 4))
+                    for ((regex, lens) in regexes) {
+                        val (opening, closing) = lens
+                        val match = regex.findAll(text).find { 
+                            it.range.last - it.range.first + 1 == opening + closing && 
+                            cursor >= it.range.first && cursor <= it.range.last + 1
+                        }
+                        if (match != null) {
+                            finalValue = newValue.copy(text = text.removeRange(match.range), selection = TextRange(match.range.first))
+                            return true
+                        }
                     }
-                    if (match != null) {
-                        finalValue = newValue.copy(text = text.removeRange(match.range), selection = TextRange(match.range.first))
-                        return true
-                    }
-                    return false
-                }
-
-                if (tryRemoveEmptyTag(boldRegex, 2, 2)) { }
-                else if (tryRemoveEmptyTag(italicRegex, 1, 1)) { }
-                else if (tryRemoveEmptyTag(underlineRegex, 3, 4)) { }
-                else {
+                    
                     val colorMatch = colorRegex.findAll(text).find { 
                         it.groupValues[2].isEmpty() && cursor >= it.range.first && cursor <= it.range.last + 1
                     }
                     if (colorMatch != null) {
                         finalValue = newValue.copy(text = text.removeRange(colorMatch.range), selection = TextRange(colorMatch.range.first))
+                        return true
                     }
+                    return false
                 }
+                
+                findAndRemoveEmptyTag()
             }
         }
         update(finalValue)
@@ -204,7 +217,8 @@ fun NoteAddAndEditContent(
         }
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp)) {
-            val markdownTransformation = remember { MarkdownVisualTransformation() }
+            val titleTransformation = remember { MarkdownVisualTransformation() }
+            val contentTransformation = remember { MarkdownVisualTransformation() }
 
             TextField(
                 value = titleValue,
@@ -213,7 +227,7 @@ fun NoteAddAndEditContent(
                 placeholder = { 
                     Text("Title", style = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.outline)) 
                 },
-                visualTransformation = markdownTransformation,
+                visualTransformation = titleTransformation,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 colors = TextFieldDefaults.colors(
@@ -232,7 +246,7 @@ fun NoteAddAndEditContent(
                 placeholder = { 
                     Text("Note content...", style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.outline)) 
                 },
-                visualTransformation = markdownTransformation,
+                visualTransformation = contentTransformation,
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
                     focusedContainerColor = Color.Transparent,
@@ -402,15 +416,31 @@ class MarkdownVisualTransformation : VisualTransformation {
 private fun isStyleActive(value: TextFieldValue, prefix: String): Boolean {
     val text = value.text
     val selection = value.selection
-    val regex = when {
-        prefix == "**" -> boldRegex
-        prefix == "_" -> italicRegex
-        prefix == "<u>" -> underlineRegex
-        prefix.startsWith("<color=") -> colorRegex
+    if (text.isEmpty()) return false
+    
+    val (regex, openingLen, closingLen) = when {
+        prefix == "**" -> Triple(boldRegex, 2, 2)
+        prefix == "_" -> Triple(italicRegex, 1, 1)
+        prefix == "<u>" -> Triple(underlineRegex, 3, 4)
+        prefix.startsWith("<color=") -> Triple(colorRegex, -1, 8)
         else -> return false
     }
-    return regex.findAll(text).any { 
-        selection.min >= it.range.first && selection.max <= it.range.last + 1
+
+    return regex.findAll(text).any { match ->
+        val actualOpeningLen = if (openingLen == -1) {
+            match.groupValues[1].length + 8
+        } else openingLen
+        
+        val contentStart = match.range.first + actualOpeningLen
+        val contentEnd = match.range.last + 1 - closingLen
+        
+        if (selection.collapsed) {
+            // Check if cursor is strictly inside the content or at its boundaries
+            selection.start in contentStart..contentEnd
+        } else {
+            // Check if selection is fully contained within the content
+            selection.min >= contentStart && selection.max <= contentEnd
+        }
     }
 }
 
@@ -420,42 +450,52 @@ private fun toggleStyle(value: TextFieldValue, prefix: String, suffix: String): 
     val start = selection.min
     val end = selection.max
 
-    val regex = when {
-        prefix == "**" -> boldRegex
-        prefix == "_" -> italicRegex
-        prefix == "<u>" -> underlineRegex
-        prefix.startsWith("<color=") -> colorRegex
+    val (regex, openingLen, closingLen) = when {
+        prefix == "**" -> Triple(boldRegex, 2, 2)
+        prefix == "_" -> Triple(italicRegex, 1, 1)
+        prefix == "<u>" -> Triple(underlineRegex, 3, 4)
+        prefix.startsWith("<color=") -> Triple(colorRegex, -1, 8)
         else -> return value
     }
 
-    val match = regex.findAll(text).find { start >= it.range.first && end <= it.range.last + 1 }
+    val match = regex.findAll(text).find { m ->
+        val actualOpeningLen = if (openingLen == -1) m.groupValues[1].length + 8 else openingLen
+        val contentStart = m.range.first + actualOpeningLen
+        val contentEnd = m.range.last + 1 - closingLen
+        
+        if (selection.collapsed) {
+            start in contentStart..contentEnd
+        } else {
+            start >= contentStart && end <= contentEnd
+        }
+    }
 
     if (match != null) {
-        if (selection.collapsed && selection.start == match.range.last + 1 - suffix.length && match.value.length > prefix.length + suffix.length) {
-            return value.copy(selection = TextRange(match.range.last + 1))
-        }
-
-        val openingTagLength = if (regex == colorRegex) match.groupValues[1].length + 8 else prefix.length
-        val closingTagLength = if (regex == colorRegex) 8 else suffix.length
-
-        // If it's a different value (color), replace it instead of just unwrapping
+        val actualOpeningLen = if (openingLen == -1) match.groupValues[1].length + 8 else openingLen
+        
+        // If it's a color tag and the color is different, replace the tag instead of unwrapping
         if (regex == colorRegex && !match.value.startsWith(prefix)) {
-            val unwrapped = match.value.substring(openingTagLength, match.value.length - closingTagLength)
+            val unwrapped = match.value.substring(actualOpeningLen, match.value.length - closingLen)
             val wrapped = prefix + unwrapped + suffix
             val newText = text.replaceRange(match.range.first, match.range.last + 1, wrapped)
-            val newStart = start - openingTagLength + prefix.length
-            val newEnd = end - openingTagLength + prefix.length
-            return value.copy(text = newText, selection = TextRange(newStart, newEnd))
+            val diff = prefix.length - actualOpeningLen
+            return value.copy(
+                text = newText,
+                selection = TextRange(start + diff, end + diff)
+            )
         }
         
-        val unwrapped = match.value.substring(openingTagLength, match.value.length - closingTagLength)
+        val unwrapped = match.value.substring(actualOpeningLen, match.value.length - closingLen)
         val newText = text.replaceRange(match.range.first, match.range.last + 1, unwrapped)
-        val newStart = (start - openingTagLength).coerceIn(match.range.first, match.range.first + unwrapped.length)
-        val newEnd = (end - openingTagLength).coerceIn(match.range.first, match.range.first + unwrapped.length)
+        val newStart = (start - actualOpeningLen).coerceIn(match.range.first, match.range.first + unwrapped.length)
+        val newEnd = (end - actualOpeningLen).coerceIn(match.range.first, match.range.first + unwrapped.length)
         return value.copy(text = newText, selection = TextRange(newStart, newEnd))
     } else {
         val selectionText = text.substring(start, end)
         val wrapped = prefix + selectionText + suffix
-        return value.copy(text = text.replaceRange(start, end, wrapped), selection = TextRange(start + prefix.length, start + prefix.length + selectionText.length))
+        return value.copy(
+            text = text.replaceRange(start, end, wrapped),
+            selection = TextRange(start + prefix.length, start + prefix.length + selectionText.length)
+        )
     }
 }
