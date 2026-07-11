@@ -193,6 +193,7 @@ fun NoteAddAndEditContent(
         },
         bottomBar = {
             StyleToolbar(
+                isKeyboardVisible = isKeyboardVisible,
                 lastFocusedField = lastFocusedField,
                 titleValue = titleValue,
                 contentValue = contentValue,
@@ -247,7 +248,7 @@ fun NoteAddAndEditContent(
 @Composable
 fun StyleToolbar(
     modifier: Modifier = Modifier,
-    isKeyboardVisible: Boolean = true,
+    isKeyboardVisible: Boolean ,
     lastFocusedField: Int,
     titleValue: TextFieldValue,
     contentValue: TextFieldValue,
@@ -369,7 +370,7 @@ fun StyleToolbar(
                 }
             }
 
-            Spacer(Modifier.height(15.dp))
+            if (!isKeyboardVisible) Spacer(Modifier.height(15.dp))
         }
     }
 }
