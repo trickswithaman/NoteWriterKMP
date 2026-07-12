@@ -1,5 +1,9 @@
 # Notiq - Compose Multiplatform Note-Taking App
 
+<div align="center">
+  <video src="media/demo.mov" width="400" autoplay loop muted playsinline></video>
+</div>
+
 Notiq is a modern, privacy-focused, cross-platform note-taking application built with **Compose Multiplatform**. It features a 100% shared UI codebase for Android and iOS, blending nostalgic design elements (like a Rotary Dialer) with modern Material 3 aesthetics.
 
 ---
