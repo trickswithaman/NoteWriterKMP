@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatColorText
 import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatUnderlined
-import androidx.compose.material.icons.outlined.FormatLineSpacing
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material.icons.outlined.PushPin
@@ -23,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -31,8 +31,10 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.notiq.db.NoteEntity
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
@@ -40,7 +42,6 @@ import com.notiq.notiq.notiq.util.boldRegex
 import com.notiq.notiq.notiq.util.colorRegex
 import com.notiq.notiq.notiq.util.getMarkdownMetadata
 import com.notiq.notiq.notiq.util.italicRegex
-import com.notiq.notiq.notiq.util.lineHeightRegex
 import com.notiq.notiq.notiq.util.underlineRegex
 import kotlinx.coroutines.delay
 
@@ -49,7 +50,7 @@ import kotlinx.coroutines.delay
 fun NoteAddAndEditScreen(
     note: NoteEntity?, viewModel: NotesListViewModel, onBack: () -> Unit
 ) {
-    var currentNote by remember { mutableStateOf(note) }
+    var currentNote by remember(note?.id) { mutableStateOf(note) }
     var titleValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(note?.title ?: ""))
     }
@@ -59,21 +60,47 @@ fun NoteAddAndEditScreen(
     var isPinned by remember { mutableStateOf(note?.isPinned ?: false) }
 
     LaunchedEffect(note) {
-        if (note != null && titleValue.text.isEmpty() && contentValue.text.isEmpty()) {
-            titleValue = TextFieldValue(note.title ?: "")
-            contentValue = TextFieldValue(note.content ?: "")
-            isPinned = note.isPinned
+        if (note != null) {
+            currentNote = note
+            if (titleValue.text.isEmpty() && contentValue.text.isEmpty()) {
+                titleValue = TextFieldValue(note.title ?: "")
+                contentValue = TextFieldValue(note.content ?: "")
+                isPinned = note.isPinned
+            }
         }
     }
 
     LaunchedEffect(titleValue.text, contentValue.text, isPinned) {
-        if (titleValue.text.isBlank() && contentValue.text.isBlank()) return@LaunchedEffect
-        if (titleValue.text == (currentNote?.title ?: "") && contentValue.text == (currentNote?.content ?: "") && isPinned == (currentNote?.isPinned ?: false)) return@LaunchedEffect
+        val hasChanged = titleValue.text != (currentNote?.title ?: "") ||
+                contentValue.text != (currentNote?.content ?: "") ||
+                isPinned != (currentNote?.isPinned ?: false)
 
-        delay(1000L)
-        viewModel.saveNote(currentNote, titleValue.text, contentValue.text, isPinned, onSuccess = { savedNote ->
+        if (!hasChanged) return@LaunchedEffect
+
+        // Don't create a new note if it's completely blank
+        if (currentNote == null && titleValue.text.isBlank() && contentValue.text.isBlank()) return@LaunchedEffect
+
+        delay(500L)
+        
+        val cleanTitle = com.notiq.notiq.notiq.util.cleanEmptyTags(titleValue.text)
+        val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
+        
+        viewModel.saveNote(currentNote, cleanTitle, cleanContent, isPinned, onSuccess = { savedNote ->
             currentNote = savedNote
         })
+    }
+
+    val handleBack = {
+        val cleanTitle = com.notiq.notiq.notiq.util.cleanEmptyTags(titleValue.text)
+        val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
+        
+        if (cleanTitle != (currentNote?.title ?: "") ||
+            cleanContent != (currentNote?.content ?: "") ||
+            isPinned != (currentNote?.isPinned ?: false)
+        ) {
+            viewModel.saveNote(currentNote, cleanTitle, cleanContent, isPinned)
+        }
+        onBack()
     }
 
     NoteAddAndEditContent(
@@ -83,7 +110,7 @@ fun NoteAddAndEditScreen(
         onTitleValueChange = { titleValue = it },
         contentValue = contentValue,
         onContentValueChange = { contentValue = it },
-        onBack = onBack
+        onBack = handleBack
     )
 }
 
@@ -103,24 +130,48 @@ fun NoteAddAndEditContent(
     val isKeyboardVisible by remember {
         derivedStateOf { imeInsets.getBottom(density) > 0 }
     }
-    var lastFocusedField by remember { mutableIntStateOf(1) } // 0 for title, 1 for content
+    var lastFocusedField by remember { mutableIntStateOf(-1) } // -1 for none, 0 for title, 1 for content
 
     fun onTextValueChange(oldValue: TextFieldValue, newValue: TextFieldValue, update: (TextFieldValue) -> Unit) {
-        if (newValue.text == oldValue.text && newValue.selection == oldValue.selection) return
+        if (newValue.text == oldValue.text && newValue.selection == oldValue.selection) {
+            update(newValue)
+            return
+        }
         
         var finalValue = newValue
+        
+        // Cleanup empty tags on deletion or when the cursor moves into/out of them
         if (newValue.text.length < oldValue.text.length) {
             val text = newValue.text
             val sel = newValue.selection
             if (sel.collapsed) {
                 val cursor = sel.start
-                if (cursor >= 2 && cursor <= text.length - 2 && text.substring(cursor - 2, cursor + 2) == "****") {
-                    finalValue = newValue.copy(text = text.removeRange(cursor - 2, cursor + 2), selection = TextRange(cursor - 2))
-                } else if (cursor >= 1 && cursor <= text.length - 1 && text.substring(cursor - 1, cursor + 1) == "__") {
-                    finalValue = newValue.copy(text = text.removeRange(cursor - 1, cursor + 1), selection = TextRange(cursor - 1))
-                } else if (cursor >= 3 && cursor <= text.length - 4 && text.substring(cursor - 3, cursor + 4) == "<u></u>") {
-                    finalValue = newValue.copy(text = text.removeRange(cursor - 3, cursor + 4), selection = TextRange(cursor - 3))
+                
+                fun findAndRemoveEmptyTag(): Boolean {
+                    val regexes = listOf(boldRegex to Pair(2, 2), italicRegex to Pair(1, 1), underlineRegex to Pair(3, 4))
+                    for ((regex, lens) in regexes) {
+                        val (opening, closing) = lens
+                        val match = regex.findAll(text).find { 
+                            it.range.last - it.range.first + 1 == opening + closing && 
+                            cursor >= it.range.first && cursor <= it.range.last + 1
+                        }
+                        if (match != null) {
+                            finalValue = newValue.copy(text = text.removeRange(match.range), selection = TextRange(match.range.first))
+                            return true
+                        }
+                    }
+                    
+                    val colorMatch = colorRegex.findAll(text).find { 
+                        it.groupValues[2].isEmpty() && cursor >= it.range.first && cursor <= it.range.last + 1
+                    }
+                    if (colorMatch != null) {
+                        finalValue = newValue.copy(text = text.removeRange(colorMatch.range), selection = TextRange(colorMatch.range.first))
+                        return true
+                    }
+                    return false
                 }
+                
+                findAndRemoveEmptyTag()
             }
         }
         update(finalValue)
@@ -162,10 +213,12 @@ fun NoteAddAndEditContent(
                 onTitleValueChange = onTitleValueChange,
                 onContentValueChange = onContentValueChange
             )
+
         }
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp)) {
-            val markdownTransformation = remember { MarkdownVisualTransformation() }
+            val titleTransformation = remember { MarkdownVisualTransformation() }
+            val contentTransformation = remember { MarkdownVisualTransformation() }
 
             TextField(
                 value = titleValue,
@@ -174,7 +227,9 @@ fun NoteAddAndEditContent(
                 placeholder = { 
                     Text("Title", style = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.outline)) 
                 },
-                visualTransformation = markdownTransformation,
+                visualTransformation = titleTransformation,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
                     focusedContainerColor = Color.Transparent,
@@ -191,7 +246,7 @@ fun NoteAddAndEditContent(
                 placeholder = { 
                     Text("Note content...", style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.outline)) 
                 },
-                visualTransformation = markdownTransformation,
+                visualTransformation = contentTransformation,
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
                     focusedContainerColor = Color.Transparent,
@@ -206,17 +261,17 @@ fun NoteAddAndEditContent(
 
 @Composable
 fun StyleToolbar(
-    isKeyboardVisible: Boolean,
+    modifier: Modifier = Modifier,
+    isKeyboardVisible: Boolean ,
     lastFocusedField: Int,
     titleValue: TextFieldValue,
     contentValue: TextFieldValue,
     onTitleValueChange: (TextFieldValue) -> Unit,
     onContentValueChange: (TextFieldValue) -> Unit
 ) {
-    if (!isKeyboardVisible) return
+ //   if (!isKeyboardVisible) return
 
     var showColorPicker by remember { mutableStateOf(false) }
-    var showLineSpacingPicker by remember { mutableStateOf(false) }
     
     val availableColors = remember {
         listOf(
@@ -224,18 +279,18 @@ fun StyleToolbar(
             "#FFA500", "#800080", "#A52A2A", "#808080", "#FFFFFF"
         )
     }
-    val lineSpacingOptions = remember { listOf(1.0f, 1.2f, 1.5f, 1.8f, 2.0f) }
 
-    val currentVal = if (lastFocusedField == 0) titleValue else contentValue
-    val onValChange = if (lastFocusedField == 0) onTitleValueChange else onContentValueChange
+    val isEnabled = lastFocusedField != -1
+    val currentVal = if (lastFocusedField == 0) titleValue else if (lastFocusedField == 1) contentValue else TextFieldValue("")
+    val onValChange = if (lastFocusedField == 0) onTitleValueChange else if (lastFocusedField == 1) onContentValueChange else { _ -> }
 
     Surface(
-        modifier = Modifier.fillMaxWidth().imePadding(),
+        modifier = modifier.fillMaxWidth().imePadding(),
         tonalElevation = 2.dp,
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
-        Column {
-            if (showColorPicker) {
+        Column(modifier = Modifier.alpha(if (isEnabled) 1f else 0.5f)) {
+            if (isEnabled && showColorPicker) {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth().padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -263,54 +318,29 @@ fun StyleToolbar(
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
             }
 
-            if (showLineSpacingPicker) {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth().padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    items(lineSpacingOptions) { spacing ->
-                        Text(
-                            text = "${spacing}x",
-                            modifier = Modifier
-                                .clickable {
-                                    val newValue = toggleStyle(currentVal, "<lh=$spacing>", "</lh>")
-                                    onValChange(newValue)
-                                    showLineSpacingPicker = false
-                                }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
-            }
-
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
-            ) {
+            )
+            {
                 val icons = remember {
                     listOf(
                         Icons.Default.FormatBold,
                         Icons.Default.FormatItalic,
                         Icons.Default.FormatUnderlined,
                         Icons.Outlined.Photo,
-                        Icons.Outlined.FormatLineSpacing,
                         Icons.Default.FormatColorText,
                         Icons.Outlined.Mic
                     )
                 }
 
-                val activeStyles = remember(currentVal.text, currentVal.selection) {
+                val activeStyles = remember(currentVal) {
                     listOf(
                         isStyleActive(currentVal, "**"),
                         isStyleActive(currentVal, "_"),
                         isStyleActive(currentVal, "<u>"),
                         false, // Photo
-                        isStyleActive(currentVal, "<lh="), // FormatLineSpacing
                         isStyleActive(currentVal, "<color="), // FormatColorText
                         false // Mic
                     )
@@ -320,29 +350,13 @@ fun StyleToolbar(
                     val isSelected = if (index < activeStyles.size) activeStyles[index] else false
 
                     IconButton(
+                        enabled = isEnabled,
                         onClick = {
                             when (index) {
                                 0 -> onValChange(toggleStyle(currentVal, "**", "**"))
                                 1 -> onValChange(toggleStyle(currentVal, "_", "_"))
                                 2 -> onValChange(toggleStyle(currentVal, "<u>", "</u>"))
                                 4 -> {
-                                    if (isSelected) {
-                                        val match = lineHeightRegex.findAll(currentVal.text).find { 
-                                            currentVal.selection.min >= it.range.first && currentVal.selection.max <= it.range.last + 1 
-                                        }
-                                        if (match != null) {
-                                            val spacing = match.groupValues[1]
-                                            onValChange(toggleStyle(currentVal, "<lh=$spacing>", "</lh>"))
-                                        } else {
-                                            showLineSpacingPicker = !showLineSpacingPicker
-                                            showColorPicker = false
-                                        }
-                                    } else {
-                                        showLineSpacingPicker = !showLineSpacingPicker
-                                        showColorPicker = false
-                                    }
-                                }
-                                5 -> {
                                     if (isSelected) {
                                         val match = colorRegex.findAll(currentVal.text).find { 
                                             currentVal.selection.min >= it.range.first && currentVal.selection.max <= it.range.last + 1 
@@ -352,11 +366,9 @@ fun StyleToolbar(
                                             onValChange(toggleStyle(currentVal, "<color=$colorHex>", "</color>"))
                                         } else {
                                             showColorPicker = !showColorPicker
-                                            showLineSpacingPicker = false
                                         }
                                     } else {
                                         showColorPicker = !showColorPicker
-                                        showLineSpacingPicker = false
                                     }
                                 }
                                 else -> {}
@@ -371,6 +383,8 @@ fun StyleToolbar(
                     }
                 }
             }
+
+            if (!isKeyboardVisible) Spacer(Modifier.height(15.dp))
         }
     }
 }
@@ -402,16 +416,31 @@ class MarkdownVisualTransformation : VisualTransformation {
 private fun isStyleActive(value: TextFieldValue, prefix: String): Boolean {
     val text = value.text
     val selection = value.selection
-    val regex = when {
-        prefix == "**" -> boldRegex
-        prefix == "_" -> italicRegex
-        prefix == "<u>" -> underlineRegex
-        prefix.startsWith("<color=") -> colorRegex
-        prefix.startsWith("<lh=") -> lineHeightRegex
+    if (text.isEmpty()) return false
+    
+    val (regex, openingLen, closingLen) = when {
+        prefix == "**" -> Triple(boldRegex, 2, 2)
+        prefix == "_" -> Triple(italicRegex, 1, 1)
+        prefix == "<u>" -> Triple(underlineRegex, 3, 4)
+        prefix.startsWith("<color=") -> Triple(colorRegex, -1, 8)
         else -> return false
     }
-    return regex.findAll(text).any { 
-        selection.min >= it.range.first && selection.max <= it.range.last + 1
+
+    return regex.findAll(text).any { match ->
+        val actualOpeningLen = if (openingLen == -1) {
+            match.groupValues[1].length + 8
+        } else openingLen
+        
+        val contentStart = match.range.first + actualOpeningLen
+        val contentEnd = match.range.last + 1 - closingLen
+        
+        if (selection.collapsed) {
+            // Check if cursor is strictly inside the content or at its boundaries
+            selection.start in contentStart..contentEnd
+        } else {
+            // Check if selection is fully contained within the content
+            selection.min >= contentStart && selection.max <= contentEnd
+        }
     }
 }
 
@@ -421,43 +450,52 @@ private fun toggleStyle(value: TextFieldValue, prefix: String, suffix: String): 
     val start = selection.min
     val end = selection.max
 
-    val regex = when {
-        prefix == "**" -> boldRegex
-        prefix == "_" -> italicRegex
-        prefix == "<u>" -> underlineRegex
-        prefix.startsWith("<color=") -> colorRegex
-        prefix.startsWith("<lh=") -> lineHeightRegex
+    val (regex, openingLen, closingLen) = when {
+        prefix == "**" -> Triple(boldRegex, 2, 2)
+        prefix == "_" -> Triple(italicRegex, 1, 1)
+        prefix == "<u>" -> Triple(underlineRegex, 3, 4)
+        prefix.startsWith("<color=") -> Triple(colorRegex, -1, 8)
         else -> return value
     }
 
-    val match = regex.findAll(text).find { start >= it.range.first && end <= it.range.last + 1 }
+    val match = regex.findAll(text).find { m ->
+        val actualOpeningLen = if (openingLen == -1) m.groupValues[1].length + 8 else openingLen
+        val contentStart = m.range.first + actualOpeningLen
+        val contentEnd = m.range.last + 1 - closingLen
+        
+        if (selection.collapsed) {
+            start in contentStart..contentEnd
+        } else {
+            start >= contentStart && end <= contentEnd
+        }
+    }
 
     if (match != null) {
-        if (selection.collapsed && selection.start == match.range.last + 1 - suffix.length && match.value.length > prefix.length + suffix.length) {
-            return value.copy(selection = TextRange(match.range.last + 1))
-        }
-
-        val openingTagLength = if (regex == colorRegex || regex == lineHeightRegex) match.groupValues[1].length + (if (regex == colorRegex) 8 else 5) else prefix.length
-        val closingTagLength = if (regex == colorRegex || regex == lineHeightRegex) (if (regex == colorRegex) 8 else 5) else suffix.length
-
-        // If it's a different value (color or line height), replace it instead of just unwrapping
-        if ((regex == colorRegex || regex == lineHeightRegex) && !match.value.startsWith(prefix)) {
-            val unwrapped = match.value.substring(openingTagLength, match.value.length - closingTagLength)
+        val actualOpeningLen = if (openingLen == -1) match.groupValues[1].length + 8 else openingLen
+        
+        // If it's a color tag and the color is different, replace the tag instead of unwrapping
+        if (regex == colorRegex && !match.value.startsWith(prefix)) {
+            val unwrapped = match.value.substring(actualOpeningLen, match.value.length - closingLen)
             val wrapped = prefix + unwrapped + suffix
             val newText = text.replaceRange(match.range.first, match.range.last + 1, wrapped)
-            val newStart = start - openingTagLength + prefix.length
-            val newEnd = end - openingTagLength + prefix.length
-            return value.copy(text = newText, selection = TextRange(newStart, newEnd))
+            val diff = prefix.length - actualOpeningLen
+            return value.copy(
+                text = newText,
+                selection = TextRange(start + diff, end + diff)
+            )
         }
         
-        val unwrapped = match.value.substring(openingTagLength, match.value.length - closingTagLength)
+        val unwrapped = match.value.substring(actualOpeningLen, match.value.length - closingLen)
         val newText = text.replaceRange(match.range.first, match.range.last + 1, unwrapped)
-        val newStart = (start - openingTagLength).coerceIn(match.range.first, match.range.first + unwrapped.length)
-        val newEnd = (end - openingTagLength).coerceIn(match.range.first, match.range.first + unwrapped.length)
+        val newStart = (start - actualOpeningLen).coerceIn(match.range.first, match.range.first + unwrapped.length)
+        val newEnd = (end - actualOpeningLen).coerceIn(match.range.first, match.range.first + unwrapped.length)
         return value.copy(text = newText, selection = TextRange(newStart, newEnd))
     } else {
         val selectionText = text.substring(start, end)
         val wrapped = prefix + selectionText + suffix
-        return value.copy(text = text.replaceRange(start, end, wrapped), selection = TextRange(start + prefix.length, start + prefix.length + selectionText.length))
+        return value.copy(
+            text = text.replaceRange(start, end, wrapped),
+            selection = TextRange(start + prefix.length, start + prefix.length + selectionText.length)
+        )
     }
 }

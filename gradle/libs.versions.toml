@@ -20,13 +20,11 @@ kotlinx-coroutines = "1.11.0"
 kotlinx-serialization = "1.11.0"
 kotlinx-datetime = "0.6.1"
 multiplatform-settings = "1.2.0"
-
+androidx-lifecycle = "2.9.0"
 androidx-constraintlayout = "2.2.1"
 androidx-core-ktx = "1.16.0"
 androidx-espresso-core = "3.6.1"
-androidx-lifecycle = "2.8.4"
-
-navigationCompose = "2.8.0-alpha13"
+navigationCompose = "2.8.0-alpha11"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -62,7 +60,11 @@ multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", vers
 multiplatform-settings-no-arg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatform-settings" }
 
 
+#Navigaton
 jetbrains-compose-navigation = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref= "navigationCompose"}
+androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
+
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }

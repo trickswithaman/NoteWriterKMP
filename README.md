@@ -1,73 +1,92 @@
-# NoteWriterKMP
+# Notiq - Compose Multiplatform Note-Taking App
 
-NoteWriterKMP is a modern, cross-platform note-taking application built using **Kotlin Multiplatform (KMP)** and **Compose Multiplatform**. It features a slick UI, local persistence, and real-time note management.
+Notiq is a modern, privacy-focused, cross-platform note-taking application built with **Compose Multiplatform**. It features a 100% shared UI codebase for Android and iOS, blending nostalgic design elements (like a Rotary Dialer) with modern Material 3 aesthetics.
 
-## 🚀 Features
+---
 
-- **Cross-Platform**: Shared logic and UI across Android and iOS.
-- **Markdown Support**: Rich text rendering for notes using Markdown, making your thoughts more expressive.
-- **Rotary Lock Screen**: A unique, nostalgic rotary phone-style passcode lock screen for enhanced security (Experimental).
-- **Auto-save**: Never lose a thought; notes are saved automatically as you type.
-- **Notes Management**: Create, edit, and delete notes with ease.
-- **Real-time Search**: Quickly find notes with an integrated top search bar.
-- **Flexible View Modes**: Seamlessly toggle between Grid and List layouts.
-- **Dynamic Theming**: Support for Light, Dark, and System Default themes, persisted across sessions.
-- **Enhanced Settings**: A comprehensive settings hub for profile management and app preferences.
-- **Animated Splash Screen**: A smooth, branded entry experience.
-- **Modern UI/UX**: Built with Material 3, featuring smooth animations and a consistent design language.
-- **AI Assistant**: Dedicated space for upcoming AI-powered note-taking features (In Progress).
-- **Local Persistence**: Reliable offline storage using SQLDelight.
+## 🚀 Current Capabilities (What the app can do now)
 
-## 🛠 Tech Stack
+Notiq is fully functional for core note-taking workflows:
+- **Create & Edit**: Compose rich text notes with real-time Markdown rendering.
+- **Organize**: Toggle between **List** and **Grid** views and **Pin** important notes to the top.
+- **Search**: Find notes instantly via a real-time filtering system.
+- **Stylize**: Apply **Bold**, *Italic*, <u>Underline</u>, and **Custom Hex Colors** to text via a dedicated toolbar.
+- **Secure**: Access the app through a unique **Rotary Phone-style Passcode Lock**.
+- **Personalize**: Switch between **Light**, **Dark**, and **System Default** themes.
+- **Offline Persistence**: All notes and settings are saved locally and persist across app restarts.
 
-- **Kotlin Multiplatform**: Core business logic sharing.
-- **Compose Multiplatform**: Declarative UI for both platforms.
-- **SQLDelight**: Type-safe local database for structured data.
-- **Koin**: Dependency injection for shared and platform-specific modules.
-- **Navigation Compose**: Modern, type-safe navigation for Multiplatform.
-- **KotlinX Coroutines**: Efficient background processing.
-- **KotlinX Serialization & Datetime**: Robust data handling and time management.
-- **Multiplatform Settings**: Persistent key-value storage for app preferences.
-- **Platform-Specific Utils**: Shared abstractions for UUID generation and system integrations.
+---
+
+## 🛠 Technology Architecture
+
+Notiq follows **Clean Architecture** principles to ensure the codebase is modular, testable, and scalable.
+
+### 1. Layers
+- **Domain Layer**: Contains the core business logic.
+    - **Models**: Plain Kotlin data classes (e.g., `NoteEntity`).
+    - **Use Cases**: Specific business rules (e.g., `GetNotesUseCase`, `AddNoteUseCase`).
+    - **Repositories**: Interfaces defining data operations.
+- **Data Layer**: Responsible for data retrieval and persistence.
+    - **Implementation**: `NotesRepositoryImpl` handles data flow.
+    - **Local Source**: **SQLDelight** for type-safe SQLite database operations.
+    - **Mappers**: Converts DB entities to Domain models.
+- **Presentation Layer**: Built with **Compose Multiplatform**.
+    - **MVVM Pattern**: ViewModels (`NotesListViewModel`, `SettingsViewModel`) manage UI state using `StateFlow`.
+    - **UI**: 100% shared Compose code in `commonMain`.
+
+### 2. Dependency Injection (DI)
+Powered by **Koin**, Notiq uses a modular DI approach:
+- **`appModule`**: Defines shared dependencies like DataSources, Repositories, UseCases, and ViewModels.
+- **`platformModule`**: Handles platform-specific injections (e.g., SQLDelight database drivers for Android and iOS).
+- **Initialization**: Managed via a shared `initKoin` function called from the Android `Application` class and iOS `MainViewController`.
+
+---
+
+## 🧰 Tech Stack
+
+| Category | Technology |
+| :--- | :--- |
+| **Framework** | [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) |
+| **Language** | Kotlin Multiplatform (KMP) |
+| **Database** | [SQLDelight](https://cashapp.github.io/sqldelight/) (SQLite) |
+| **DI** | [Koin](https://insert-koin.io/) |
+| **Navigation** | Jetpack Navigation Compose (Multiplatform) |
+| **Concurrency** | KotlinX Coroutines |
+| **Persistence** | Multiplatform Settings |
+| **Time** | KotlinX Datetime |
+| **UI Components** | Material 3 |
+
+---
 
 ## 📂 Project Structure
 
-- `/shared`: Contains the core logic and shared UI (Compose Multiplatform).
-    - `commonMain`: Shared code for all platforms (Logic, UI, Database).
-    - `androidMain`: Android-specific implementations and DI.
-    - `iosMain`: iOS-specific implementations.
-- `/androidApp`: Android-specific entry point and configuration.
-- `/iosApp`: iOS-specific entry point (SwiftUI) and configuration.
+- **`shared/`**: The core logic and UI.
+    - **`commonMain/`**: Contains the 3-layer architecture (Data, Domain, Presentation) and the shared `App()` entry point.
+    - **`androidMain/`**: Android-specific implementations (e.g., Database Driver).
+    - **`iosMain/`**: iOS-specific implementations (e.g., Native SQLite Driver).
+- **`androidApp/`**: Thin Android wrapper (MainActivity).
+- **`iosApp/`**: SwiftUI wrapper hosting the `UIViewController` that renders the shared Compose UI.
 
-## 🚀 Getting Started
+---
+
+## 🏗 Setup & Installation
 
 ### Prerequisites
-
-- Android Studio Koala or newer.
-- Xcode 15 or newer (for iOS development).
-- Kotlin Multiplatform plugin installed in Android Studio.
+- **Android Studio Koala+**
+- **Xcode 15+** (for iOS)
+- **Kotlin Multiplatform Plugin**
 
 ### Running the App
+1. **Clone the repository.**
+2. **Android**: Select `androidApp` in the run configurations and click Play.
+3. **iOS**: Open `iosApp/iosApp.xcworkspace` in Xcode and run on a simulator/device.
+4. **CLI**:
+   ```bash
+   ./gradlew :androidApp:installDebug
+   ```
 
-#### Android
-1. Open the project in Android Studio.
-2. Select `androidApp` in the run configurations.
-3. Click **Run**.
-
-#### iOS
-1. Open the `iosApp/iosApp.xcworkspace` file in Xcode.
-2. Select a simulator or physical device.
-3. Click **Run**.
-
-Alternatively, you can run the Android app via CLI:
-```bash
-./gradlew :androidApp:installDebug
-```
+---
 
 ## 🤝 Contributing
+Contributions are welcome! Fork the repo and submit a PR for any features or bug fixes.
 
-Contributions are welcome! If you'd like to improve NoteWriterKMP, feel free to fork the repository and submit a pull request.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

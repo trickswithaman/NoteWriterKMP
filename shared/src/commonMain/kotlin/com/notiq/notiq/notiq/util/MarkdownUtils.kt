@@ -2,7 +2,6 @@ package com.notiq.notiq.notiq.util
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -14,7 +13,6 @@ internal val boldRegex = Regex("""(?s)\*\*(.*?)\*\*""")
 internal val italicRegex = Regex("""(?s)_(.*?)_""")
 internal val underlineRegex = Regex("""(?s)<u>(.*?)</u>""")
 internal val colorRegex = Regex("""(?s)<color=(#[0-9a-fA-F]{6,8})>(.*?)</color>""")
-internal val lineHeightRegex = Regex("""(?s)<lh=([0-9.]+?)>(.*?)</lh>""")
 
 fun parseColor(colorString: String): Color {
     return try {
@@ -46,7 +44,6 @@ fun getMarkdownMetadata(original: String): MarkdownMetadata {
     val italicMatches = italicRegex.findAll(original).toList()
     val underlineMatches = underlineRegex.findAll(original).toList()
     val colorMatches = colorRegex.findAll(original).toList()
-    val lhMatches = lineHeightRegex.findAll(original).toList()
 
     val isTagArray = BooleanArray(original.length)
     
@@ -66,11 +63,6 @@ fun getMarkdownMetadata(original: String): MarkdownMetadata {
         val openingTagLength = it.groupValues[1].length + 8
         for (i in it.range.first until it.range.first + openingTagLength) isTagArray[i] = true
         for (i in it.range.last - 7..it.range.last) isTagArray[i] = true
-    }
-    lhMatches.forEach {
-        val openingTagLength = it.groupValues[1].length + 5
-        for (i in it.range.first until it.range.first + openingTagLength) isTagArray[i] = true
-        for (i in it.range.last - 4..it.range.last) isTagArray[i] = true
     }
 
     val transformed = StringBuilder(original.length)
@@ -93,30 +85,63 @@ fun getMarkdownMetadata(original: String): MarkdownMetadata {
     
     val finalTransformedToOriginal = transformedToOriginalList.copyOf(tIdx + 1)
 
-    // Override mappings to favor being "inside" styled ranges at boundaries
+    // Robust mapping for boundaries:
+    // When the cursor is at the edge of a styled block, we want it to map 
+    // to the "inside" of the tags so that typing continues the style.
+    
     boldMatches.forEach {
-        val contentStart = it.range.first + 2
-        val contentEndPos = it.range.last - 1
-        if (contentStart < original.length) {
-            val transStart = originalToTransformed[contentStart]
-            if (transStart < finalTransformedToOriginal.size) finalTransformedToOriginal[transStart] = contentStart
+        val openingLen = 2
+        val closingLen = 2
+        val contentStart = it.range.first + openingLen
+        val contentEnd = it.range.last + 1 - closingLen
+        
+        val transStart = originalToTransformed[it.range.first]
+        if (transStart < finalTransformedToOriginal.size) {
+            finalTransformedToOriginal[transStart] = contentStart
         }
-        if (contentEndPos + 1 <= original.length) {
-            val transEnd = originalToTransformed[contentEndPos + 1]
-            if (transEnd < finalTransformedToOriginal.size) finalTransformedToOriginal[transEnd] = contentEndPos + 1
+        
+        val transEnd = originalToTransformed[it.range.last + 1]
+        if (transEnd < finalTransformedToOriginal.size) {
+            finalTransformedToOriginal[transEnd] = contentEnd
         }
     }
+    
+    italicMatches.forEach {
+        val openingLen = 1
+        val closingLen = 1
+        val contentStart = it.range.first + openingLen
+        val contentEnd = it.range.last + 1 - closingLen
+        val transStart = originalToTransformed[it.range.first]
+        if (transStart < finalTransformedToOriginal.size) finalTransformedToOriginal[transStart] = contentStart
+        val transEnd = originalToTransformed[it.range.last + 1]
+        if (transEnd < finalTransformedToOriginal.size) finalTransformedToOriginal[transEnd] = contentEnd
+    }
+    
+    underlineMatches.forEach {
+        val openingLen = 3
+        val closingLen = 4
+        val contentStart = it.range.first + openingLen
+        val contentEnd = it.range.last + 1 - closingLen
+        val transStart = originalToTransformed[it.range.first]
+        if (transStart < finalTransformedToOriginal.size) finalTransformedToOriginal[transStart] = contentStart
+        val transEnd = originalToTransformed[it.range.last + 1]
+        if (transEnd < finalTransformedToOriginal.size) finalTransformedToOriginal[transEnd] = contentEnd
+    }
+
     colorMatches.forEach {
         val openingTagLength = it.groupValues[1].length + 8
+        val closingLen = 8
         val contentStart = it.range.first + openingTagLength
-        val contentEndPos = it.range.last - 7
-        if (contentStart < original.length) {
-            val transStart = originalToTransformed[contentStart]
-            if (transStart < finalTransformedToOriginal.size) finalTransformedToOriginal[transStart] = contentStart
+        val contentEnd = it.range.last + 1 - closingLen
+        
+        val transStart = originalToTransformed[it.range.first]
+        if (transStart < finalTransformedToOriginal.size) {
+            finalTransformedToOriginal[transStart] = contentStart
         }
-        if (contentEndPos + 1 <= original.length) {
-            val transEnd = originalToTransformed[contentEndPos + 1]
-            if (transEnd < finalTransformedToOriginal.size) finalTransformedToOriginal[transEnd] = contentEndPos + 1
+        
+        val transEnd = originalToTransformed[it.range.last + 1]
+        if (transEnd < finalTransformedToOriginal.size) {
+            finalTransformedToOriginal[transEnd] = contentEnd
         }
     }
 
@@ -135,96 +160,36 @@ fun getMarkdownMetadata(original: String): MarkdownMetadata {
             val color = parseColor(it.groupValues[1])
             addStyle(SpanStyle(color = color), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
         }
-        lhMatches.forEach {
-            val multiplier = it.groupValues[1].toFloatOrNull() ?: 1.0f
-            addStyle(ParagraphStyle(lineHeight = multiplier.em), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
-        }
     }
 
     return MarkdownMetadata(annotatedString, originalToTransformed, finalTransformedToOriginal)
 }
 
 fun renderMarkdown(original: String): AnnotatedString {
-    if (original.isEmpty()) return AnnotatedString("")
-    
-    // Quick check to avoid regex if no markdown symbols are present
-    if (!original.contains("**") && !original.contains("_") && !original.contains("<u>") && !original.contains("<color=") && !original.contains("<lh=")) {
-        return AnnotatedString(original)
-    }
+    // Reuse mapping logic for consistency
+    return getMarkdownMetadata(original).annotatedString
+}
 
-    val boldMatches = boldRegex.findAll(original).toList()
-    val italicMatches = italicRegex.findAll(original).toList()
-    val underlineMatches = underlineRegex.findAll(original).toList()
-    val colorMatches = colorRegex.findAll(original).toList()
-    val lhMatches = lineHeightRegex.findAll(original).toList()
-
-    val tagRanges = mutableListOf<IntRange>()
-    boldMatches.forEach {
-        tagRanges.add(IntRange(it.range.first, it.range.first + 1))
-        tagRanges.add(IntRange(it.range.last - 1, it.range.last))
-    }
-    italicMatches.forEach {
-        tagRanges.add(IntRange(it.range.first, it.range.first))
-        tagRanges.add(IntRange(it.range.last, it.range.last))
-    }
-    underlineMatches.forEach {
-        tagRanges.add(IntRange(it.range.first, it.range.first + 2))
-        tagRanges.add(IntRange(it.range.last - 3, it.range.last))
-    }
-    colorMatches.forEach {
-        val openingTagLength = it.groupValues[1].length + 8
-        tagRanges.add(IntRange(it.range.first, it.range.first + openingTagLength - 1))
-        tagRanges.add(IntRange(it.range.last - 7, it.range.last))
-    }
-    lhMatches.forEach {
-        val openingTagLength = it.groupValues[1].length + 5
-        tagRanges.add(IntRange(it.range.first, it.range.first + openingTagLength - 1))
-        tagRanges.add(IntRange(it.range.last - 4, it.range.last))
-    }
-
-    val transformed = StringBuilder()
-    val originalToTransformed = IntArray(original.length + 1)
-
-    val isTagArray = BooleanArray(original.length)
-    tagRanges.forEach { range ->
-        for (i in range) {
-            if (i in isTagArray.indices) isTagArray[i] = true
-        }
-    }
-
-    var tIdx = 0
-    for (oIdx in 0..original.length) {
-        val isTag = oIdx < original.length && isTagArray[oIdx]
-
-        if (!isTag) {
-            if (oIdx < original.length) {
-                transformed.append(original[oIdx])
+fun cleanEmptyTags(text: String): String {
+    if (text.isEmpty()) return ""
+    var result = text
+    val regexes = listOf(boldRegex, italicRegex, underlineRegex, colorRegex)
+    var changed: Boolean
+    do {
+        changed = false
+        for (regex in regexes) {
+            val matches = regex.findAll(result).filter { match ->
+                if (regex == colorRegex) match.groupValues[2].isEmpty()
+                else match.groupValues[1].isEmpty()
+            }.toList()
+            
+            if (matches.isNotEmpty()) {
+                for (match in matches.reversed()) {
+                    result = result.removeRange(match.range)
+                    changed = true
+                }
             }
-            originalToTransformed[oIdx] = tIdx
-            tIdx++
-        } else {
-            originalToTransformed[oIdx] = tIdx
         }
-    }
-
-    return buildAnnotatedString {
-        append(transformed.toString())
-        boldMatches.forEach {
-            addStyle(SpanStyle(fontWeight = FontWeight.Bold), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
-        }
-        italicMatches.forEach {
-            addStyle(SpanStyle(fontStyle = FontStyle.Italic), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
-        }
-        underlineMatches.forEach {
-            addStyle(SpanStyle(textDecoration = TextDecoration.Underline), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
-        }
-        colorMatches.forEach {
-            val color = parseColor(it.groupValues[1])
-            addStyle(SpanStyle(color = color), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
-        }
-        lhMatches.forEach {
-            val multiplier = it.groupValues[1].toFloatOrNull() ?: 1.0f
-            addStyle(ParagraphStyle(lineHeight = multiplier.em), originalToTransformed[it.range.first], originalToTransformed[it.range.last + 1])
-        }
-    }
+    } while (changed)
+    return result
 }
