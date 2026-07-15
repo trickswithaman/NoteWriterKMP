@@ -47,6 +47,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.notiq.db.NoteEntity
 import com.notiq.notiq.domain.model.getButtonbarItems
+import com.notiq.notiq.notiq.components.ModernBottomBar
+import com.notiq.notiq.notiq.components.NormalTopBar
+import com.notiq.notiq.notiq.components.TopSearchBar
 import com.notiq.notiq.notiq.navigation.Screens.Screen
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
@@ -109,149 +112,6 @@ fun BottomNavigation(
                     SettingScreen()
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun NormalTopBar() {
-    Surface(
-        modifier = Modifier.statusBarsPadding().fillMaxWidth(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
-        ) {
-            IconButton(
-                onClick = {}) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profile",
-                    modifier = Modifier.size(32.dp).padding(2.dp)
-                )
-            }
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = "Notiq",
-                style = MaterialTheme.typography.titleLarge,
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TopSearchBar(
-    search: String, viewModel: NotesListViewModel
-) {
-    val isGridView by viewModel.isGridView.collectAsStateWithLifecycle()
-    val interactionSource = remember { MutableInteractionSource() }
-
-    Surface(
-        modifier = Modifier.statusBarsPadding().fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        tonalElevation = 2.dp
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search",
-                modifier = Modifier.padding(end = 8.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            BasicTextField(
-                value = search,
-                onValueChange = { viewModel.onSearch(it) },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
-                interactionSource = interactionSource,
-                singleLine = true,
-                decorationBox = { innerTextField ->
-                    if (search.isEmpty()) {
-                        Text(
-                            "Search your notes",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-                    }
-                    innerTextField()
-                })
-
-            if (search.isNotEmpty()) {
-                IconButton(onClick = { viewModel.onSearch("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = "Clear search",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            IconButton(onClick = { viewModel.toggleViewMode() }) {
-                Icon(
-                    imageVector = if (isGridView) Icons.Default.GridView else Icons.AutoMirrored.Filled.ViewList,
-                    contentDescription = "Toggle view mode",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-
-        }
-    }
-}
-
-@Composable
-fun ModernBottomBar(
-    navController: NavHostController
-) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val items = remember { getButtonbarItems() }
-    val currentRoute = navBackStackEntry?.destination?.route
-
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 8.dp
-    ) {
-        items.forEach { item ->
-            val isSelected = currentRoute == item.route
-
-            NavigationBarItem(
-                selected = isSelected, onClick = {
-                if (!isSelected) {
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.startDestinationRoute.toString()) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            }, icon = {
-                Icon(
-                    imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                    contentDescription = item.title
-                )
-            }, label = {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                )
-            }, colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = MaterialTheme.colorScheme.primary,
-                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
-                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-            )
-            )
         }
     }
 }
