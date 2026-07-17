@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notiq.db.NoteEntity
+import com.notiq.notiq.notiq.presentation.NoDatafound.NoResultsFound
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NoteItem
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
 import com.notiq.notiq.notiq.util.UiState
@@ -100,29 +101,6 @@ fun SearchPlaceholder() {
             "Search your notes",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-        )
-    }
-}
-
-@Composable
-fun NoResultsFound(query: String) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = null,
-            modifier = Modifier.size(120.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-        )
-        Spacer(Modifier.height(16.dp))
-        Text(
-            "No notes found matching \"$query\"",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
