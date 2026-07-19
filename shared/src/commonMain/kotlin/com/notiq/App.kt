@@ -23,11 +23,5 @@ fun App() {
         else -> isSystemInDarkTheme()
     }
 
-    NoteWriterTheme(darkTheme = darkTheme) {
-        val viewModel = koinViewModel<NotesListViewModel>()
 
-        MainNavigation(
-            viewModel
-        )
-    }
 }
