@@ -28,7 +28,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notiq.db.NoteEntity
 import com.notiq.notiq.notiq.components.formatDate
+import com.notiq.notiq.notiq.navigation.PhotoItem
 import com.notiq.notiq.notiq.util.renderMarkdown
+import io.github.ismoy.imagepickerkmp.domain.models.PhotoResult
 
 
 @Composable
@@ -88,6 +90,14 @@ fun NoteItem(
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
+            }
+
+            if (note.imagePath != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                PhotoItem(
+                    photo = PhotoResult(uri = note.imagePath),
+                    modifier = Modifier.fillMaxWidth().height(if (isGridView) 100.dp else 150.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))

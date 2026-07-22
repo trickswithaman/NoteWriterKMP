@@ -41,6 +41,7 @@ import com.notiq.notiq.notiq.components.MarkdownVisualTransformation
 import com.notiq.notiq.notiq.components.StyleToolbar
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
 import com.notiq.notiq.notiq.util.boldRegex
+import com.notiq.notiq.notiq.util.cleanEmptyTags
 import com.notiq.notiq.notiq.util.colorRegex
 import com.notiq.notiq.notiq.util.getMarkdownMetadata
 import com.notiq.notiq.notiq.util.italicRegex
@@ -61,6 +62,10 @@ fun NoteAddAndEditScreen(
     }
     var isPinned by remember { mutableStateOf(note?.isPinned ?: false) }
 
+    var imagePath by remember(note?.id) {
+        mutableStateOf(note?.imagePath)
+    }
+
     LaunchedEffect(note) {
         if (note != null) {
             currentNote = note
@@ -68,6 +73,7 @@ fun NoteAddAndEditScreen(
                 titleValue = TextFieldValue(note.title ?: "")
                 contentValue = TextFieldValue(note.content ?: "")
                 isPinned = note.isPinned
+                imagePath = note.imagePath
             }
         }
     }
@@ -80,35 +86,72 @@ fun NoteAddAndEditScreen(
         if (!hasChanged) return@LaunchedEffect
 
         // Don't create a new note if it's completely blank
-        if (currentNote == null && titleValue.text.isBlank() && contentValue.text.isBlank()) return@LaunchedEffect
+        if (currentNote == null && titleValue.text.isBlank() && contentValue.text.isBlank() && imagePath.isNullOrBlank()) return@LaunchedEffect
 
         delay(500L)
         
         val cleanTitle = com.notiq.notiq.notiq.util.cleanEmptyTags(titleValue.text)
         val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
+
+        viewModel.saveNote(
+            existingNote = currentNote,
+            title = cleanTitle,
+            content = cleanContent,
+            imagePath = imagePath,
+            isPinned = isPinned,
+            onSuccess = { savedNote ->
+                currentNote = savedNote
+            }
+        )
+    }
+
+    LaunchedEffect(imagePath) {
+        if (imagePath == currentNote?.imagePath) return@LaunchedEffect
         
-        viewModel.saveNote(currentNote, cleanTitle, cleanContent, isPinned, onSuccess = { savedNote ->
-            currentNote = savedNote
-        })
+        val cleanTitle = com.notiq.notiq.notiq.util.cleanEmptyTags(titleValue.text)
+        val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
+
+        viewModel.saveNote(
+            existingNote = currentNote,
+            title = cleanTitle,
+            content = cleanContent,
+            imagePath = imagePath,
+            isPinned = isPinned,
+            onSuccess = { savedNote ->
+                currentNote = savedNote
+            }
+        )
     }
 
     val handleBack = {
         val cleanTitle = com.notiq.notiq.notiq.util.cleanEmptyTags(titleValue.text)
         val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
         
-        if (cleanTitle != (currentNote?.title ?: "") ||
-            cleanContent != (currentNote?.content ?: "") ||
-            isPinned != (currentNote?.isPinned ?: false)
-        ) {
-            viewModel.saveNote(currentNote, cleanTitle, cleanContent, isPinned)
+        val hasChanged = cleanTitle != (currentNote?.title ?: "") ||
+                cleanContent != (currentNote?.content ?: "") ||
+                isPinned != (currentNote?.isPinned ?: false) ||
+                imagePath != currentNote?.imagePath
+
+        if (hasChanged) {
+            viewModel.saveNote(
+                existingNote = currentNote,
+                title = cleanTitle,
+                content = cleanContent,
+                imagePath = imagePath,
+                isPinned = isPinned,
+                onSuccess = { onBack() }
+            )
+        } else {
+            onBack()
         }
-        onBack()
     }
 
     NoteAddAndEditContent(
         isPinned = isPinned,
         onTogglePin = { isPinned = !isPinned },
         titleValue = titleValue,
+        imagePath = imagePath,
+        onImagePathChange = { imagePath = it },
         onTitleValueChange = { titleValue = it },
         contentValue = contentValue,
         onContentValueChange = { contentValue = it },

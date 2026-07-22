@@ -97,6 +97,7 @@ class NotesListViewModel(
         existingNote: NoteEntity?,
         title: String,
         content: String,
+        imagePath : String? = null,
         isPinned: Boolean? = null,
         onSuccess: (NoteEntity) -> Unit = {}
     ) {
@@ -106,6 +107,7 @@ class NotesListViewModel(
                 id = existingNote?.id ?: randomUUID(),
                 title = title,
                 content = content,
+                imagePath = imagePath,
                 isPinned = isPinned ?: existingNote?.isPinned ?: false,
                 createdAt = existingNote?.createdAt ?: now,
                 updatedAt = now

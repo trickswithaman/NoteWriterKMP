@@ -4,6 +4,7 @@ CREATE TABLE NoteEntity(
     id TEXT NOT NULL PRIMARY KEY,
     title TEXT,
     content TEXT,
+    imagePath TEXT,
     isPinned INTEGER AS Boolean NOT NULL DEFAULT 0,
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL
@@ -16,14 +17,14 @@ SELECT * FROM NoteEntity ORDER BY createdAt DESC;
 
 insertNote:
 INSERT OR REPLACE INTO NoteEntity(
-    id, title, content, isPinned, createdAt, updatedAt
+    id, title, content,imagePath, isPinned, createdAt, updatedAt
 )
-VALUES (?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?,?, ?, ?, ?);
 
 deleteNote:
 DELETE FROM NoteEntity WHERE id = ?;
 
 updateNote:
 UPDATE NoteEntity
-SET title = ?, content = ?, isPinned = ?, updatedAt = ?
+SET title = ?, imagePath = ?, content = ?, isPinned = ?, updatedAt = ?
 WHERE id = ?;

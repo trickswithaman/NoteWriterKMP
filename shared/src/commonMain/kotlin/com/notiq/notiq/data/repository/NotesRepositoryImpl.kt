@@ -21,6 +21,7 @@ class NotesRepositoryImpl(
             id = note.id,
             title = note.title,
             content = note.content,
+            imagePath = note.imagePath,
             updatedAt = note.updatedAt,
             isPinned = note.isPinned
         )
@@ -31,6 +32,7 @@ class NotesRepositoryImpl(
             id = note.id,
             title = note.title,
             content = note.content,
+            imagePath = note.imagePath,
             isPinned = note.isPinned,
             createdAt = note.createdAt,
             updatedAt = note.updatedAt

@@ -8,6 +8,7 @@ fun NoteEntity.toDomain(): NoteEntity {
         id = id,
         title = title,
         content = content,
+        imagePath = imagePath,
         isPinned = isPinned,
         createdAt = createdAt,
         updatedAt = updatedAt
