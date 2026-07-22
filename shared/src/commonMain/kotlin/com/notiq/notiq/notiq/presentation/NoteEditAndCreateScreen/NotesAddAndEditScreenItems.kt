@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -62,6 +65,7 @@ import com.notiq.notiq.notiq.components.MarkdownVisualTransformation
 import com.notiq.notiq.notiq.components.StyleToolbar
 import com.notiq.notiq.notiq.navigation.PhotoItem
 import com.notiq.notiq.notiq.ui.theme.Red
+import com.notiq.notiq.notiq.ui.theme.White
 import com.notiq.notiq.notiq.util.boldRegex
 import com.notiq.notiq.notiq.util.colorRegex
 import com.notiq.notiq.notiq.util.italicRegex
@@ -69,6 +73,7 @@ import com.notiq.notiq.notiq.util.underlineRegex
 import io.github.ismoy.imagepickerkmp.domain.config.GalleryConfig
 import io.github.ismoy.imagepickerkmp.features.imagepicker.config.ImagePickerKMPConfig
 import io.github.ismoy.imagepickerkmp.features.imagepicker.model.ImagePickerResult
+import io.github.ismoy.imagepickerkmp.features.imagepicker.state.ImagePickerKMPState
 import io.github.ismoy.imagepickerkmp.features.imagepicker.ui.rememberImagePickerKMP
 import kotlinx.coroutines.launch
 
@@ -80,6 +85,7 @@ fun NoteAddAndEditContent(
     onTogglePin: () -> Unit,
     titleValue: TextFieldValue,
     imagePath: String? = null,
+    picker: ImagePickerKMPState,
     onImagePathChange: (String?) -> Unit,
     onTitleValueChange: (TextFieldValue) -> Unit,
     contentValue: TextFieldValue,
@@ -90,8 +96,6 @@ fun NoteAddAndEditContent(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-
-    val picker = rememberImagePickerKMP()
     val result = picker.result
 /*    val picker = rememberImagePickerKMP(
         config = ImagePickerKMPConfig(
@@ -207,102 +211,103 @@ fun NoteAddAndEditContent(
 
         }
     ) { paddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp)) {
-            val titleTransformation = remember { MarkdownVisualTransformation() }
-            val contentTransformation = remember { MarkdownVisualTransformation() }
 
-            when (result) {
 
-                is ImagePickerResult.Loading -> CircularProgressIndicator()
-                is ImagePickerResult.Success -> {
-                    val photos = result.photos
-                    LaunchedEffect(photos) {
-                        snackbarHostState.showSnackbar("Image selected",)
-                        if (photos.isNotEmpty() && photos.first().uri != imagePath) {
-                            onImagePathChange(photos.first().uri)
-                        }
-                    }
-                    if (photos.size == 1) {
-                        Box {
-                            PhotoItem(
-                                photo = photos.first(),
-                                modifier = Modifier.fillMaxWidth().height(200.dp)
-                            )
-                            IconButton(
-                                onClick = { onImagePathChange(null) },
-                                modifier = Modifier.align(Alignment.TopEnd).background(Color.Black.copy(alpha = 0.5f), CircleShape)
+        LazyColumn (modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp)) {
+
+            item {
+                val titleTransformation = remember { MarkdownVisualTransformation() }
+                val contentTransformation = remember { MarkdownVisualTransformation() }
+
+                when (result) {
+
+                    is ImagePickerResult.Loading -> CircularProgressIndicator()
+                    is ImagePickerResult.Success -> {
+                        val photos = result.photos
+                        if (photos.size == 1) {
+                            Box {
+                                PhotoItem(
+                                    photo = photos.first(),
+
+                                    )
+                                IconButton(
+                                    onClick = { onImagePathChange(null) },
+                                    modifier = Modifier.align(Alignment.TopEnd)
+                                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                ) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Remove Image", tint = Color.White)
+                                }
+                            }
+                        } else {
+                            LazyVerticalStaggeredGrid(
+                                modifier = Modifier.fillMaxWidth(),
+                                columns = StaggeredGridCells.Fixed(2),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalItemSpacing = 8.dp
                             ) {
-                                Icon(Icons.Default.Clear, contentDescription = "Remove Image", tint = Color.White)
+                                items(photos) { photo ->
+                                    PhotoItem(photo = photo)
+                                }
                             }
                         }
-                    } else {
-                        LazyVerticalStaggeredGrid(
-                            modifier = Modifier.fillMaxWidth().weight(1f),
-                            columns = StaggeredGridCells.Fixed(2),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalItemSpacing = 8.dp
-                        ) {
-                            items(photos) { photo ->
-                                PhotoItem(photo = photo)
+                    }
+
+                    is ImagePickerResult.Error -> Text("Error: ${result.exception.message}", color = Red)
+                    is ImagePickerResult.Dismissed -> Text("Selection cancelled", color = Gray)
+                    is ImagePickerResult.Idle -> {
+                        if (imagePath != null) {
+                            Box {
+                                PhotoItem(
+                                    photo = io.github.ismoy.imagepickerkmp.domain.models.PhotoResult(uri = imagePath),
+                                )
+                                IconButton(
+                                    onClick = { onImagePathChange(null) },
+                                    modifier = Modifier.align(Alignment.TopEnd).background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                ) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Remove Image", tint = Color.White)
+                                }
                             }
                         }
                     }
                 }
 
-                is ImagePickerResult.Error -> Text("Error: ${result.exception.message}", color = Red)
-                is ImagePickerResult.Dismissed -> Text("Selection cancelled", color = Gray)
-                is ImagePickerResult.Idle -> {
-                    if (imagePath != null) {
-                        Box {
-                            PhotoItem(
-                                photo = io.github.ismoy.imagepickerkmp.domain.models.PhotoResult(uri = imagePath),
-                                modifier = Modifier.fillMaxWidth().height(200.dp)
-                            )
-                            IconButton(
-                                onClick = { onImagePathChange(null) },
-                                modifier = Modifier.align(Alignment.TopEnd).background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                            ) {
-                                Icon(Icons.Default.Clear, contentDescription = "Remove Image", tint = Color.White)
-                            }
-                        }
-                    }
-                }
+                TextField(
+                    value = titleValue,
+                    onValueChange = { onTextValueChange(titleValue, it, onTitleValueChange) },
+                    modifier = Modifier.fillMaxWidth().onFocusChanged { if (it.isFocused) lastFocusedField = 0 },
+                    placeholder = {
+                        Text("Title", style = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.outline))
+                    },
+                    visualTransformation = titleTransformation,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                    ),
+                    textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
+                )
+
+                TextField(
+                    value = contentValue,
+                    onValueChange = { onTextValueChange(contentValue, it, onContentValueChange) },
+                    modifier = Modifier.fillMaxWidth().onFocusChanged { if (it.isFocused) lastFocusedField = 1 },
+                    placeholder = {
+                        Text("Note content...", style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.outline))
+                    },
+                    visualTransformation = contentTransformation,
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                    ),
+                    textStyle = MaterialTheme.typography.bodyLarge
+                )
             }
-            TextField(
-                value = titleValue,
-                onValueChange = { onTextValueChange(titleValue, it, onTitleValueChange) },
-                modifier = Modifier.fillMaxWidth().onFocusChanged { if (it.isFocused) lastFocusedField = 0 },
-                placeholder = {
-                    Text("Title", style = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.outline))
-                },
-                visualTransformation = titleTransformation,
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                ),
-                textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
-            )
 
-            TextField(
-                value = contentValue,
-                onValueChange = { onTextValueChange(contentValue, it, onContentValueChange) },
-                modifier = Modifier.fillMaxWidth().weight(1f).onFocusChanged { if (it.isFocused) lastFocusedField = 1 },
-                placeholder = {
-                    Text("Note content...", style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.outline))
-                },
-                visualTransformation = contentTransformation,
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                ),
-                textStyle = MaterialTheme.typography.bodyLarge
-            )
         }
     }
 }

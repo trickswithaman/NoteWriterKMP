@@ -190,7 +190,7 @@ fun PhotoItem(photo: PhotoResult, modifier: Modifier = Modifier) {
             Image(
                 painter = painter,
                 contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.wrapContentSize(),
                 contentScale = ContentScale.Fit
             )
         } else {
