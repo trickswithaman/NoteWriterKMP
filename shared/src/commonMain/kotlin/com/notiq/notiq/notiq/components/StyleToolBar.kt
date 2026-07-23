@@ -23,12 +23,16 @@ import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Photo
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +64,8 @@ fun StyleToolbar(
     lastFocusedField: Int,
     titleValue: TextFieldValue,
     contentValue: TextFieldValue,
+    onGalleryClick: () -> Unit,
+    onCameraClick: () -> Unit,
     onTitleValueChange: (TextFieldValue) -> Unit,
     onContentValueChange: (TextFieldValue) -> Unit
 ) {
@@ -73,13 +79,15 @@ fun StyleToolbar(
             "#FFA500", "#800080", "#A52A2A", "#808080", "#FFFFFF"
         )
     }
+    var showImageBottomSheet by remember { mutableStateOf(false) }
+
 
     val isEnabled = lastFocusedField != -1
     val currentVal = if (lastFocusedField == 0) titleValue else if (lastFocusedField == 1) contentValue else TextFieldValue("")
     val onValChange = if (lastFocusedField == 0) onTitleValueChange else if (lastFocusedField == 1) onContentValueChange else { _ -> }
 
     Surface(
-        modifier = modifier.fillMaxWidth().imePadding(),
+        modifier = modifier.fillMaxWidth(),
         tonalElevation = 2.dp,
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
@@ -150,6 +158,9 @@ fun StyleToolbar(
                                 0 -> onValChange(toggleStyle(currentVal, "**", "**"))
                                 1 -> onValChange(toggleStyle(currentVal, "_", "_"))
                                 2 -> onValChange(toggleStyle(currentVal, "<u>", "</u>"))
+                                3 -> {
+                                    showImageBottomSheet = true
+                                }
                                 4 -> {
                                     if (isSelected) {
                                         val match = colorRegex.findAll(currentVal.text).find {
@@ -177,8 +188,56 @@ fun StyleToolbar(
                     }
                 }
             }
-
+            if (showImageBottomSheet) {
+                ImageBottomSheet(
+                    onCameraClick = {
+                        showImageBottomSheet = false
+                        onCameraClick()
+                    },
+                    onGalleryClick = {
+                        showImageBottomSheet = false
+                        onGalleryClick()
+                    },
+                    onDismiss = {
+                        showImageBottomSheet = false
+                    }
+                )
+            }
             if (!isKeyboardVisible) Spacer(Modifier.height(15.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ImageBottomSheet(
+    onCameraClick: () -> Unit,
+    onGalleryClick: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = onCameraClick,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Camera")
+            }
+
+            Button(
+                onClick = onGalleryClick,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Gallery")
+            }
         }
     }
 }

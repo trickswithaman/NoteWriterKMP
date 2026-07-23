@@ -97,28 +97,43 @@ class NotesListViewModel(
         existingNote: NoteEntity?,
         title: String,
         content: String,
+        imagePath: String? = null,
         isPinned: Boolean? = null,
         onSuccess: (NoteEntity) -> Unit = {}
     ) {
+        val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        val note = NoteEntity(
+            id = existingNote?.id ?: randomUUID(),
+            title = title,
+            content = content,
+            imagePath = imagePath,
+            isPinned = isPinned ?: existingNote?.isPinned ?: false,
+            createdAt = existingNote?.createdAt ?: now,
+            updatedAt = now
+        )
+
+        // Optimistic update for instant UI feedback
+        val currentNotes = _allNotes.value.toMutableList()
+        val index = currentNotes.indexOfFirst { it.id == note.id }
+        if (index != -1) {
+            currentNotes[index] = note
+        } else {
+            currentNotes.add(0, note)
+        }
+        _allNotes.value = currentNotes
+
         viewModelScope.launch {
-            val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
-            val note = NoteEntity(
-                id = existingNote?.id ?: randomUUID(),
-                title = title,
-                content = content,
-                isPinned = isPinned ?: existingNote?.isPinned ?: false,
-                createdAt = existingNote?.createdAt ?: now,
-                updatedAt = now
-            )
-
-            if (existingNote == null) {
-                addNoteUseCase(note)
-            } else {
-                updateNoteUseCase(note)
+            try {
+                if (existingNote == null) {
+                    addNoteUseCase(note)
+                } else {
+                    updateNoteUseCase(note)
+                }
+                onSuccess(note)
+            } catch (_: Exception) {
+                // Rollback or handle error if needed
+                loadNotes()
             }
-
-            loadNotes()
-            onSuccess(note)
         }
     }
 

@@ -87,6 +87,8 @@ kotlin {
           //  implementation(libs.jetbrains.compose.navigation)
             // Icons
             implementation(compose.materialIconsExtended)
+
+            implementation("io.github.ismoy:imagepickerkmp:1.0.43")
         }
         
         val iosMain by creating {

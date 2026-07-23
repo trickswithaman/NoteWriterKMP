@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -28,7 +29,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notiq.db.NoteEntity
 import com.notiq.notiq.notiq.components.formatDate
+import com.notiq.notiq.notiq.navigation.PhotoItem
 import com.notiq.notiq.notiq.util.renderMarkdown
+import io.github.ismoy.imagepickerkmp.domain.models.PhotoResult
 
 
 @Composable
@@ -65,6 +68,13 @@ fun NoteItem(
         Column(
             modifier = Modifier.padding(16.dp).fillMaxWidth()
         ) {
+            if (note.imagePath != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                PhotoItem(
+                    photo = PhotoResult(uri = note.imagePath),
+                    modifier = Modifier.wrapContentSize().height(if (isGridView) 100.dp else 150.dp)
+                )
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -89,6 +99,8 @@ fun NoteItem(
                     )
                 }
             }
+
+
 
             Spacer(modifier = Modifier.height(8.dp))
 
