@@ -3,6 +3,8 @@ package com.notiq.notiq.notiq.presentation.NoteLIstScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notiq.db.NoteEntity
+import com.notiq.db.NoteImageEntity
+import com.notiq.notiq.domain.model.NoteWithImages
 import com.notiq.notiq.domain.usecase.AddNoteUseCase
 import com.notiq.notiq.domain.usecase.DeleteNoteUseCase
 import com.notiq.notiq.domain.usecase.GetNotesUseCase
@@ -31,7 +33,8 @@ class NotesListViewModel(
     private val settings: Settings = Settings()
     private val VIEW_MODE_KEY = "is_grid_view"
 
-    private val _allNotes = MutableStateFlow<List<NoteEntity>>(emptyList())
+    // _allNotes now holds the full NoteWithImages objects for relational data management.
+    private val _allNotes = MutableStateFlow<List<NoteWithImages>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
@@ -46,7 +49,7 @@ class NotesListViewModel(
     }
 
     @OptIn(FlowPreview::class)
-    val notes: StateFlow<UiState<List<NoteEntity>>> = combine(
+    val notes: StateFlow<UiState<List<NoteWithImages>>> = combine(
         _allNotes,
         _searchQuery.debounce(300L),
         _isLoading,
@@ -58,8 +61,8 @@ class NotesListViewModel(
             else -> {
                 val filteredNotes = getNotes.search(notes, query)
                     .sortedWith(
-                        compareByDescending<NoteEntity> { it.isPinned == true }
-                            .thenByDescending { it.createdAt }
+                        compareByDescending<NoteWithImages> { it.note.isPinned == true }
+                            .thenByDescending { it.note.createdAt }
                     )
                 if (filteredNotes.isEmpty()) UiState.Empty else UiState.Success(filteredNotes)
             }
@@ -93,52 +96,71 @@ class NotesListViewModel(
         settings[VIEW_MODE_KEY] = newValue
     }
 
+    /**
+     * Saves or updates a note with its associated images.
+     * 
+     * @param existingNoteId The ID of the note if updating.
+     * @param imageUris A list of URIs for the images to be linked with this note.
+     */
     fun saveNote(
-        existingNote: NoteEntity?,
+        existingNoteId: String? = null,
         title: String,
         content: String,
-        imagePath: String? = null,
-        isPinned: Boolean? = null,
-        onSuccess: (NoteEntity) -> Unit = {}
+        imageUris: List<String> = emptyList(),
+        isPinned: Boolean = false,
+        onSuccess: (NoteWithImages) -> Unit = {}
     ) {
         val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        val noteId = existingNoteId ?: randomUUID()
+        
         val note = NoteEntity(
-            id = existingNote?.id ?: randomUUID(),
+            id = noteId,
             title = title,
             content = content,
-            imagePath = imagePath,
-            isPinned = isPinned ?: existingNote?.isPinned ?: false,
-            createdAt = existingNote?.createdAt ?: now,
+            // imagePath is now a simplified preview (the first image)
+            imagePath = imageUris.firstOrNull(),
+            isPinned = isPinned,
+            createdAt = now, // This might need to be refined for updates
             updatedAt = now
         )
+        
+        val images = imageUris.map { uri ->
+            NoteImageEntity(
+                id = randomUUID(),
+                noteId = noteId,
+                uri = uri,
+                createdAt = now
+            )
+        }
+        
+        val noteWithImages = NoteWithImages(note, images)
 
-        // Optimistic update for instant UI feedback
+        // Optimistic update
         val currentNotes = _allNotes.value.toMutableList()
-        val index = currentNotes.indexOfFirst { it.id == note.id }
+        val index = currentNotes.indexOfFirst { it.note.id == noteId }
         if (index != -1) {
-            currentNotes[index] = note
+            currentNotes[index] = noteWithImages
         } else {
-            currentNotes.add(0, note)
+            currentNotes.add(0, noteWithImages)
         }
         _allNotes.value = currentNotes
 
         viewModelScope.launch {
             try {
-                if (existingNote == null) {
-                    addNoteUseCase(note)
+                if (existingNoteId == null) {
+                    addNoteUseCase(note, images)
                 } else {
-                    updateNoteUseCase(note)
+                    updateNoteUseCase(note, images)
                 }
-                onSuccess(note)
+                onSuccess(noteWithImages)
             } catch (_: Exception) {
-                // Rollback or handle error if needed
                 loadNotes()
             }
         }
     }
 
-    fun getNoteById(id: String): NoteEntity? {
-        return _allNotes.value.find { it.id == id }
+    fun getNoteById(id: String): NoteWithImages? {
+        return _allNotes.value.find { it.note.id == id }
     }
 
     fun deleteNote(id: String) {

@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notiq.db.NoteEntity
+import com.notiq.notiq.domain.model.NoteWithImages
 import com.notiq.notiq.notiq.presentation.NoDatafound.NoResultsFound
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NoteItem
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
@@ -33,7 +34,7 @@ import com.notiq.notiq.notiq.util.UiState
 @Composable
 fun SearchScreen(
     viewModel: NotesListViewModel,
-    onNoteClick: (NoteEntity) -> Unit
+    onNoteClick: (NoteWithImages) -> Unit
 ) {
     val notesState by viewModel.notes.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -57,12 +58,12 @@ fun SearchScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(state.data, key = { it.id }) { note ->
+                        items(state.data, key = { it.note.id }) { noteWithImages ->
                             NoteItem(
-                                note = note,
+                                noteWithImages = noteWithImages,
                                 isGridView = isGridView,
-                                onEditNote = { onNoteClick(note) },
-                                onDeleteNote = { viewModel.deleteNote(note.id) }
+                                onEditNote = { onNoteClick(noteWithImages) },
+                                onDeleteNote = { viewModel.deleteNote(noteWithImages.note.id) }
                             )
                         }
                     }

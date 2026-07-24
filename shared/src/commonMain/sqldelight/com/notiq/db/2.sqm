@@ -1,0 +1,8 @@
+-- Migration to add NoteImageEntity table for multi-image support
+CREATE TABLE NoteImageEntity(
+    id TEXT NOT NULL PRIMARY KEY,
+    noteId TEXT NOT NULL,
+    uri TEXT NOT NULL,
+    createdAt INTEGER NOT NULL,
+    FOREIGN KEY(noteId) REFERENCES NoteEntity(id) ON DELETE CASCADE
+);
