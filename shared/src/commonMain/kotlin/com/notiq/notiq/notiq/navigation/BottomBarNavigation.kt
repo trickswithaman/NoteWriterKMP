@@ -2,7 +2,6 @@ package com.notiq.notiq.notiq.navigation
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +54,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.notiq.db.NoteEntity
+import com.notiq.notiq.domain.model.NoteWithImages
 import com.notiq.notiq.domain.model.getButtonbarItems
 import com.notiq.notiq.notiq.components.ModernBottomBar
 import com.notiq.notiq.notiq.components.NormalTopBar
@@ -75,7 +75,7 @@ import io.github.ismoy.imagepickerkmp.features.imagepicker.ui.rememberImagePicke
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomNavigation(
-    viewModel: NotesListViewModel, onNoteSelected: (NoteEntity?) -> Unit
+    viewModel: NotesListViewModel, onNoteSelected: (NoteWithImages?) -> Unit
 ) {
     val search by viewModel.searchQuery.collectAsStateWithLifecycle()
     val navController = rememberNavController()
@@ -120,61 +120,12 @@ fun BottomNavigation(
                     )
                 }
                 composable(route = Screen.AiAssistant.route) {
-                    ImagePicker()
+                    Text("dfdfd")
                 }
                 composable(route = Screen.Setting.route) {
                     SettingScreen()
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun ImagePicker() {
-    val picker = rememberImagePickerKMP()
-    val result = picker.result
-
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(onClick = { picker.launchCamera() }, modifier = Modifier.weight(1f)) {
-                Text("Camera")
-            }
-            Button(onClick = { picker.launchGallery() }, modifier = Modifier.weight(1f)) {
-                Text("Gallery")
-            }
-        }
-
-        when (result) {
-            is ImagePickerResult.Loading -> CircularProgressIndicator()
-            is ImagePickerResult.Success -> {
-                val photos = result.photos
-                if (photos.size == 1) {
-                    PhotoItem(photo = photos.first(), modifier = Modifier.background(Green).wrapContentSize())
-                } else {
-                    LazyVerticalStaggeredGrid(
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                        columns = StaggeredGridCells.Fixed(2),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalItemSpacing = 8.dp
-                    ) {
-                        items(photos) { photo ->
-                            PhotoItem(photo = photo)
-                        }
-                    }
-                }
-            }
-
-            is ImagePickerResult.Error -> Text("Error: ${result.exception.message}", color = Red)
-            is ImagePickerResult.Dismissed -> Text("Selection cancelled", color = Gray)
-            is ImagePickerResult.Idle -> Text("Press a button to get started", color = Gray)
         }
     }
 }
@@ -190,7 +141,7 @@ fun PhotoItem(photo: PhotoResult, modifier: Modifier = Modifier) {
             Image(
                 painter = painter,
                 contentDescription = null,
-                modifier = Modifier.wrapContentSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit
             )
         } else {

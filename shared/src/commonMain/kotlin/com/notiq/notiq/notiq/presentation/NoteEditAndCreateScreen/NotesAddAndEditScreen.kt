@@ -37,6 +37,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.notiq.db.NoteEntity
+import com.notiq.notiq.domain.model.NoteWithImages
 import com.notiq.notiq.notiq.components.MarkdownVisualTransformation
 import com.notiq.notiq.notiq.components.StyleToolbar
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
@@ -53,19 +54,21 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun NoteAddAndEditScreen(
-    note: NoteEntity?, viewModel: NotesListViewModel, onBack: () -> Unit
+    noteWithImages: NoteWithImages?, viewModel: NotesListViewModel, onBack: () -> Unit
 ) {
-    var currentNote by remember(note?.id) { mutableStateOf(note) }
+    var currentNoteWithImages by remember(noteWithImages?.note?.id) { mutableStateOf(noteWithImages) }
+    
     var titleValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(note?.title ?: ""))
+        mutableStateOf(TextFieldValue(noteWithImages?.note?.title ?: ""))
     }
     var contentValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(note?.content ?: ""))
+        mutableStateOf(TextFieldValue(noteWithImages?.note?.content ?: ""))
     }
-    var isPinned by remember { mutableStateOf(note?.isPinned ?: false) }
+    var isPinned by remember { mutableStateOf(noteWithImages?.note?.isPinned ?: false) }
 
-    var imagePath by remember(note?.id) {
-        mutableStateOf(note?.imagePath)
+    // Now we manage the list of image URIs directly from the NoteWithImages relational model.
+    var imagePaths by remember(noteWithImages?.note?.id) {
+        mutableStateOf(noteWithImages?.images?.map { it.uri } ?: emptyList())
     }
 
     val picker = rememberImagePickerKMP()
@@ -73,38 +76,39 @@ fun NoteAddAndEditScreen(
 
     LaunchedEffect(pickerResult) {
         if (pickerResult is ImagePickerResult.Success) {
-            val newPath = pickerResult.photos.firstOrNull()?.uri
-            if (newPath != null && newPath != imagePath) {
-                imagePath = newPath
+            val newPaths = pickerResult.photos.map { it.uri }
+            if (newPaths.isNotEmpty()) {
+                imagePaths = (imagePaths + newPaths).distinct()
             }
         }
     }
 
-    LaunchedEffect(note) {
-        if (note != null) {
-            currentNote = note
+    LaunchedEffect(noteWithImages) {
+        if (noteWithImages != null) {
+            currentNoteWithImages = noteWithImages
             if (titleValue.text.isEmpty() && contentValue.text.isEmpty()) {
-                titleValue = TextFieldValue(note.title ?: "")
-                contentValue = TextFieldValue(note.content ?: "")
-                isPinned = note.isPinned
-                imagePath = note.imagePath
+                titleValue = TextFieldValue(noteWithImages.note.title ?: "")
+                contentValue = TextFieldValue(noteWithImages.note.content ?: "")
+                isPinned = noteWithImages.note.isPinned
+                imagePaths = noteWithImages.images.map { it.uri }
             }
         }
     }
 
-    LaunchedEffect(titleValue.text, contentValue.text, isPinned, imagePath) {
-        val hasChanged = titleValue.text != (currentNote?.title ?: "") ||
-                contentValue.text != (currentNote?.content ?: "") ||
-                isPinned != (currentNote?.isPinned ?: false) ||
-                imagePath != currentNote?.imagePath
+    LaunchedEffect(titleValue.text, contentValue.text, isPinned, imagePaths) {
+        val hasChanged = titleValue.text != (currentNoteWithImages?.note?.title ?: "") ||
+                contentValue.text != (currentNoteWithImages?.note?.content ?: "") ||
+                isPinned != (currentNoteWithImages?.note?.isPinned ?: false) ||
+                imagePaths != (currentNoteWithImages?.images?.map { it.uri } ?: emptyList<String>())
 
         if (!hasChanged) return@LaunchedEffect
 
         // Don't create a new note if it's completely blank
-        if (currentNote == null && titleValue.text.isBlank() && contentValue.text.isBlank() && imagePath.isNullOrBlank()) return@LaunchedEffect
+        if (currentNoteWithImages == null && titleValue.text.isBlank() && contentValue.text.isBlank() && imagePaths.isEmpty()) return@LaunchedEffect
 
-        // Only delay for text changes
-        val isTextChange = titleValue.text != (currentNote?.title ?: "") || contentValue.text != (currentNote?.content ?: "")
+        // Delay to avoid excessive DB writes during typing
+        val isTextChange = titleValue.text != (currentNoteWithImages?.note?.title ?: "") || 
+                           contentValue.text != (currentNoteWithImages?.note?.content ?: "")
         if (isTextChange) {
             delay(500L)
         }
@@ -113,13 +117,13 @@ fun NoteAddAndEditScreen(
         val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
 
         viewModel.saveNote(
-            existingNote = currentNote,
+            existingNoteId = currentNoteWithImages?.note?.id,
             title = cleanTitle,
             content = cleanContent,
-            imagePath = imagePath,
+            imageUris = imagePaths,
             isPinned = isPinned,
             onSuccess = { savedNote ->
-                currentNote = savedNote
+                currentNoteWithImages = savedNote
             }
         )
     }
@@ -128,37 +132,36 @@ fun NoteAddAndEditScreen(
         val cleanTitle = com.notiq.notiq.notiq.util.cleanEmptyTags(titleValue.text)
         val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
         
-        // Use the current imagePath OR the one from the picker if it just finished
-        val finalImagePath = if (pickerResult is ImagePickerResult.Success) {
-            pickerResult.photos.firstOrNull()?.uri ?: imagePath
+        val finalImagePaths = if (pickerResult is ImagePickerResult.Success) {
+            (imagePaths + pickerResult.photos.map { it.uri }).distinct()
         } else {
-            imagePath
+            imagePaths
         }
 
-        val hasChanged = cleanTitle != (currentNote?.title ?: "") ||
-                cleanContent != (currentNote?.content ?: "") ||
-                isPinned != (currentNote?.isPinned ?: false) ||
-                finalImagePath != currentNote?.imagePath
+        val hasChanged = cleanTitle != (currentNoteWithImages?.note?.title ?: "") ||
+                cleanContent != (currentNoteWithImages?.note?.content ?: "") ||
+                isPinned != (currentNoteWithImages?.note?.isPinned ?: false) ||
+                finalImagePaths != (currentNoteWithImages?.images?.map { it.uri } ?: emptyList<String>())
 
         if (hasChanged) {
             viewModel.saveNote(
-                existingNote = currentNote,
+                existingNoteId = currentNoteWithImages?.note?.id,
                 title = cleanTitle,
                 content = cleanContent,
-                imagePath = finalImagePath,
+                imageUris = finalImagePaths,
                 isPinned = isPinned
             )
         }
-        onBack() // Instant navigation
+        onBack()
     }
 
     NoteAddAndEditContent(
         isPinned = isPinned,
         onTogglePin = { isPinned = !isPinned },
         titleValue = titleValue,
-        imagePath = imagePath,
+        imagePaths = imagePaths,
         picker = picker,
-        onImagePathChange = { imagePath = it },
+        onImagePathsChange = { imagePaths = it },
         onTitleValueChange = { titleValue = it },
         contentValue = contentValue,
         onContentValueChange = { contentValue = it },

@@ -1,5 +1,7 @@
 package com.notiq.notiq.notiq.presentation.NoteLIstScreen
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,7 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.staggeredgrid.LazyHorizontalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -28,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notiq.db.NoteEntity
+import com.notiq.notiq.domain.model.NoteWithImages
 import com.notiq.notiq.notiq.components.formatDate
 import com.notiq.notiq.notiq.navigation.PhotoItem
 import com.notiq.notiq.notiq.util.renderMarkdown
@@ -36,8 +44,11 @@ import io.github.ismoy.imagepickerkmp.domain.models.PhotoResult
 
 @Composable
 fun NoteItem(
-    note: NoteEntity, onEditNote: () -> Unit, onDeleteNote: () -> Unit, isGridView: Boolean
+    noteWithImages: NoteWithImages, onEditNote: () -> Unit, onDeleteNote: () -> Unit, isGridView: Boolean
 ) {
+    val note = noteWithImages.note
+    val images = noteWithImages.images
+
     val renderedTitle = remember(note.title) {
         renderMarkdown(note.title ?: "")
     }
@@ -65,15 +76,43 @@ fun NoteItem(
             )
         )
     ) {
+
         Column(
             modifier = Modifier.padding(16.dp).fillMaxWidth()
         ) {
-            if (note.imagePath != null) {
+            // Using the new relational NoteWithImages model to display a preview list of images.
+            if (images.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                PhotoItem(
-                    photo = PhotoResult(uri = note.imagePath),
-                    modifier = Modifier.wrapContentSize().height(if (isGridView) 100.dp else 150.dp)
-                )
+
+
+                if (images.size >1){
+                    LazyVerticalStaggeredGrid(
+                        columns = StaggeredGridCells.Fixed(3),
+                        userScrollEnabled = false,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .sizeIn(
+                                minHeight = if (isGridView) 100.dp else 150.dp,
+                                maxHeight = if (isGridView) 200.dp else 300.dp
+                            ),
+                        verticalItemSpacing = 4.dp,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        items(images, key = { it.id }) { imageEntity ->
+                            PhotoItem(
+                                photo = PhotoResult(uri = imageEntity.uri),
+                                modifier = Modifier.wrapContentSize()
+                            )
+                        }
+                    }
+                } else {
+                    PhotoItem(
+                        photo = PhotoResult(uri = images.first().uri),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),

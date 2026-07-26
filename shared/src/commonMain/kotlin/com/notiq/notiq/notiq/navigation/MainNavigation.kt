@@ -12,7 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.savedstate.read
-import com.notiq.db.NoteEntity
+import com.notiq.notiq.domain.model.NoteWithImages
 import com.notiq.notiq.notiq.navigation.Screens.Screen
 import com.notiq.notiq.notiq.util.UiState
 import com.notiq.notiq.notiq.presentation.NoteEditAndCreateScreen.NoteAddAndEditScreen
@@ -34,22 +34,25 @@ fun MainNavigation(
     }, noteListScreen = { onEdit ->
         NotesListScreen(viewModel = viewModel, onEdit = onEdit)
     }, addNoteScreen = { onBack ->
-        NoteAddAndEditScreen(note = null, viewModel = viewModel, onBack = onBack)
-    }, noteDetailsScreen = { note, onBack ->
-        NoteAddAndEditScreen(note = note, viewModel = viewModel, onBack = onBack)
+        // Use NoteWithImages model (null for new note)
+        NoteAddAndEditScreen(noteWithImages = null, viewModel = viewModel, onBack = onBack)
+    }, noteDetailsScreen = { noteWithImages, onBack ->
+        // Pass the full NoteWithImages object to the edit screen
+        NoteAddAndEditScreen(noteWithImages = noteWithImages, viewModel = viewModel, onBack = onBack)
     })
 }
 
 @Composable
 fun MainNavigationContent(
-    notes: List<NoteEntity>,
+    // Update to use the new NoteWithImages domain model
+    notes: List<NoteWithImages>,
     navController: NavHostController = rememberNavController(),
     startDestination: String = Screen.SplashScreen.route,
     splashScreen: @Composable (onNavigate: () -> Unit) -> Unit,
-    dashboardScreen: @Composable (onNoteSelected: (NoteEntity?) -> Unit) -> Unit,
-    noteListScreen: @Composable (onEdit: (NoteEntity) -> Unit) -> Unit,
+    dashboardScreen: @Composable (onNoteSelected: (NoteWithImages?) -> Unit) -> Unit,
+    noteListScreen: @Composable (onEdit: (NoteWithImages) -> Unit) -> Unit,
     addNoteScreen: @Composable (onBack: () -> Unit) -> Unit,
-    noteDetailsScreen: @Composable (note: NoteEntity?, onBack: () -> Unit) -> Unit
+    noteDetailsScreen: @Composable (noteWithImages: NoteWithImages?, onBack: () -> Unit) -> Unit
 ) {
     NavHost(
         navController = navController, startDestination = startDestination
@@ -71,17 +74,18 @@ fun MainNavigationContent(
         composable(
             route = Screen.DashboardScreen.route
         ) {
-            dashboardScreen { note ->
-                if (note != null) {
-                    navController.navigate(Screen.NoteDetailsScreen.passId(note.id))
+            dashboardScreen { noteWithImages ->
+                if (noteWithImages != null) {
+                    // Use note.id from the NoteEntity inside NoteWithImages
+                    navController.navigate(Screen.NoteDetailsScreen.passId(noteWithImages.note.id))
                 } else {
                     navController.navigate(Screen.AddNoteScreen.route)
                 }
             }
         }
         composable(route = Screen.NoteListScreen.route) {
-            noteListScreen { note ->
-                navController.navigate(Screen.NoteDetailsScreen.passId(note.id))
+            noteListScreen { noteWithImages ->
+                navController.navigate(Screen.NoteDetailsScreen.passId(noteWithImages.note.id))
             }
         }
         composable(route = Screen.AddNoteScreen.route) {
@@ -95,9 +99,10 @@ fun MainNavigationContent(
             })
         ) { backStackEntry ->
             val noteId = backStackEntry.arguments?.read { getString("noteId") } ?: ""
-            val note = notes.find { it.id == noteId }
+            // Find the note in our relational model list
+            val noteWithImages = notes.find { it.note.id == noteId }
 
-            noteDetailsScreen(note) {
+            noteDetailsScreen(noteWithImages) {
                 navController.popBackStack()
             }
         }

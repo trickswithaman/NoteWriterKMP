@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notiq.db.NoteEntity
+import com.notiq.notiq.domain.model.NoteWithImages
 import com.notiq.notiq.notiq.util.UiState
 import com.notiq.notiq.notiq.util.renderMarkdown
 import kotlinx.datetime.Instant
@@ -46,7 +47,7 @@ import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun NotesListScreen(
-    viewModel: NotesListViewModel, onEdit: (NoteEntity) -> Unit
+    viewModel: NotesListViewModel, onEdit: (NoteWithImages) -> Unit
 ) {
     val notesState by viewModel.notes.collectAsStateWithLifecycle()
     val isGridView by viewModel.isGridView.collectAsStateWithLifecycle()
@@ -61,6 +62,7 @@ fun NotesListScreen(
             }
 
             is UiState.Success -> {
+
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(if (isGridView) 2 else 1),
                     modifier = Modifier.fillMaxSize(),
@@ -68,12 +70,12 @@ fun NotesListScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(state.data, key = { it.id }) { note ->
+                    items(state.data, key = { it.note.id }) { noteWithImages ->
                         NoteItem(
-                            note = note,
+                            noteWithImages = noteWithImages,
                             isGridView = isGridView,
-                            onEditNote = { onEdit(note) },
-                            onDeleteNote = { viewModel.deleteNote(note.id) })
+                            onEditNote = { onEdit(noteWithImages) },
+                            onDeleteNote = { viewModel.deleteNote(noteWithImages.note.id) })
                     }
                 }
             }

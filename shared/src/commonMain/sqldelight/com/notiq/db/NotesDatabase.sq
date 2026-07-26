@@ -4,13 +4,24 @@ CREATE TABLE NoteEntity(
     id TEXT NOT NULL PRIMARY KEY,
     title TEXT,
     content TEXT,
+    -- We keep imagePath in NoteEntity for a quick preview/thumbnail if needed,
+    -- but all images for a note are now primarily managed in NoteImageEntity.
     imagePath TEXT,
     isPinned INTEGER AS Boolean NOT NULL DEFAULT 0,
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL
 );
 
-
+-- NoteImageEntity table creates a relational link between a Note and multiple Images.
+-- noteId: links this image to a specific note.
+-- uri: the location of the image file.
+CREATE TABLE NoteImageEntity(
+    id TEXT NOT NULL PRIMARY KEY,
+    noteId TEXT NOT NULL,
+    uri TEXT NOT NULL,
+    createdAt INTEGER NOT NULL,
+    FOREIGN KEY(noteId) REFERENCES NoteEntity(id) ON DELETE CASCADE
+);
 
 selectAll:
 SELECT * FROM NoteEntity ORDER BY createdAt DESC;
@@ -28,3 +39,17 @@ updateNote:
 UPDATE NoteEntity
 SET title = ?, imagePath = ?, content = ?, isPinned = ?, updatedAt = ?
 WHERE id = ?;
+
+-- Image relationship queries
+getImagesForNote:
+SELECT * FROM NoteImageEntity WHERE noteId = ? ORDER BY createdAt ASC;
+
+insertImage:
+INSERT OR REPLACE INTO NoteImageEntity(id, noteId, uri, createdAt)
+VALUES (?, ?, ?, ?);
+
+deleteImageById:
+DELETE FROM NoteImageEntity WHERE id = ?;
+
+deleteImagesByNoteId:
+DELETE FROM NoteImageEntity WHERE noteId = ?;
