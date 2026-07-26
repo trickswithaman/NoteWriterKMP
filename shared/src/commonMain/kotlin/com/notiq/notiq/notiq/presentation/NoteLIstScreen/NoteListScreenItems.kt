@@ -1,5 +1,7 @@
 package com.notiq.notiq.notiq.presentation.NoteLIstScreen
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.staggeredgrid.LazyHorizontalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -73,6 +76,7 @@ fun NoteItem(
             )
         )
     ) {
+
         Column(
             modifier = Modifier.padding(16.dp).fillMaxWidth()
         ) {
@@ -81,21 +85,34 @@ fun NoteItem(
                 Spacer(modifier = Modifier.height(8.dp))
 
 
-                LazyVerticalStaggeredGrid(
-                    columns = StaggeredGridCells.Fixed(3),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(if (isGridView) 100.dp else 150.dp),
-                    verticalItemSpacing = 4.dp,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    items(images) { imageEntity ->
-                        PhotoItem(
-                            photo = PhotoResult(uri = imageEntity.uri),
-                            modifier = Modifier.weight(1f)
-                        )
+                if (images.size >1){
+                    LazyVerticalStaggeredGrid(
+                        columns = StaggeredGridCells.Fixed(3),
+                        userScrollEnabled = false,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .sizeIn(
+                                minHeight = if (isGridView) 100.dp else 150.dp,
+                                maxHeight = if (isGridView) 200.dp else 300.dp
+                            ),
+                        verticalItemSpacing = 4.dp,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        items(images, key = { it.id }) { imageEntity ->
+                            PhotoItem(
+                                photo = PhotoResult(uri = imageEntity.uri),
+                                modifier = Modifier.wrapContentSize()
+                            )
+                        }
                     }
+                } else {
+                    PhotoItem(
+                        photo = PhotoResult(uri = images.first().uri),
+                        modifier = Modifier.weight(1f)
+                    )
                 }
+
+
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),

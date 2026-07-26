@@ -61,6 +61,11 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.viewmodel)
 
+            // Coil
+            implementation(libs.coil)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
+
             // SQLDelight
             implementation(libs.sqldelight.runtime)
 
