@@ -87,7 +87,7 @@ fun StyleToolbar(
     val onValChange = if (lastFocusedField == 0) onTitleValueChange else if (lastFocusedField == 1) onContentValueChange else { _ -> }
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().imePadding(),
         tonalElevation = 2.dp,
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
