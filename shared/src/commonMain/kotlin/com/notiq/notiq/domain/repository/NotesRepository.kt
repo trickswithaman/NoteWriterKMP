@@ -22,4 +22,6 @@ interface NotesRepository {
     suspend fun insertNote(note: NoteEntity, images: List<NoteImageEntity>)
 
     suspend fun deleteNote(id: String)
+
+    suspend fun deleteAllNotes()
 }

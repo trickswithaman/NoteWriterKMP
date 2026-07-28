@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -50,10 +51,10 @@ fun NoteItem(
     val images = noteWithImages.images
 
     val renderedTitle = remember(note.title) {
-        renderMarkdown(note.title ?: "")
+        renderMarkdown(note.title ?: "Unknown Note")
     }
     val renderedContent = remember(note.content) {
-        renderMarkdown(note.content ?: "")
+        renderMarkdown(note.content ?: "Unknown")
     }
     val formattedDate = remember(note.createdAt) {
         formatDate(note.createdAt)
@@ -108,7 +109,9 @@ fun NoteItem(
                 } else {
                     PhotoItem(
                         photo = PhotoResult(uri = images.first().uri),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
                     )
                 }
 

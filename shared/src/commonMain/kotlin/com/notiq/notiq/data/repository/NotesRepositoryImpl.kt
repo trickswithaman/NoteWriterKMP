@@ -64,6 +64,11 @@ class NotesRepositoryImpl(
 
     override suspend fun deleteNote(id: String) = withContext(Dispatchers.Default) {
         // If CASCADE DELETE is configured in SQL, this also removes images automatically.
+        // NOTE: Foreign keys must be enabled in the driver for CASCADE DELETE to work.
         local.deleteNote(id)
+    }
+
+    override suspend fun deleteAllNotes() = withContext(Dispatchers.Default) {
+        local.deleteAllNotes()
     }
 }

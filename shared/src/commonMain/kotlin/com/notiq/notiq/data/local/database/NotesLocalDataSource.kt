@@ -46,6 +46,10 @@ class NotesLocalDataSource(
         queries.deleteNote(id)
     }
 
+    fun deleteAllNotes() {
+        queries.deleteAllNotes()
+    }
+
     // --- Image Related Methods ---
 
     /**

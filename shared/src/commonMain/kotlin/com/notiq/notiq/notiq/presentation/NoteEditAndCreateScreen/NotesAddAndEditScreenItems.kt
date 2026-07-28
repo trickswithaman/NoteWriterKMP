@@ -1,20 +1,27 @@
 package com.notiq.notiq.notiq.presentation.NoteEditAndCreateScreen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -34,34 +41,41 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.notiq.notiq.notiq.components.MarkdownVisualTransformation
 import com.notiq.notiq.notiq.components.StyleToolbar
 import com.notiq.notiq.notiq.navigation.PhotoItem
 import com.notiq.notiq.notiq.util.boldRegex
 import com.notiq.notiq.notiq.util.colorRegex
+import com.notiq.notiq.notiq.util.getMarkdownMetadata
 import com.notiq.notiq.notiq.util.italicRegex
 import com.notiq.notiq.notiq.util.underlineRegex
 import io.github.ismoy.imagepickerkmp.domain.models.PhotoResult
 import io.github.ismoy.imagepickerkmp.features.imagepicker.state.ImagePickerKMPState
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun NoteAddAndEditContent(
     isPinned: Boolean = false,
@@ -77,6 +91,27 @@ fun NoteAddAndEditContent(
     onBack: () -> Unit
 ) {
 
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+    var lastFocusedField by remember { mutableIntStateOf(-1) } // -1 for none, 0 for title, 1 for content
+
+    LaunchedEffect(contentValue.selection, contentValue.text, textLayoutResult, lastFocusedField) {
+        val layoutResult = textLayoutResult
+        val selection = contentValue.selection
+        if (lastFocusedField == 1 && layoutResult != null && selection.collapsed) {
+            val metadata = getMarkdownMetadata(contentValue.text)
+            val transformedOffset = metadata.originalToTransformed.getOrNull(selection.start) ?: selection.start
+            
+            if (transformedOffset <= layoutResult.layoutInput.text.length) {
+                val cursorRect = layoutResult.getCursorRect(transformedOffset)
+                // Adding a small buffer to the cursor rect to ensure it's comfortably in view
+                runCatching {
+                    bringIntoViewRequester.bringIntoView(cursorRect.copy(bottom = cursorRect.bottom + 20f))
+                }
+            }
+        }
+    }
+
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -85,7 +120,6 @@ fun NoteAddAndEditContent(
     val isKeyboardVisible by remember {
         derivedStateOf { imeInsets.getBottom(density) > 0 }
     }
-    var lastFocusedField by remember { mutableIntStateOf(-1) } // -1 for none, 0 for title, 1 for content
 
     fun onTextValueChange(
         oldValue: TextFieldValue,
@@ -151,6 +185,7 @@ fun NoteAddAndEditContent(
     Scaffold(
         modifier = Modifier.fillMaxSize().imePadding(),
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets.navigationBars,
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -250,6 +285,7 @@ fun NoteAddAndEditContent(
                     value = titleValue,
                     onValueChange = { onTextValueChange(titleValue, it, onTitleValueChange) },
                     modifier = Modifier.fillMaxWidth()
+                        .bringIntoViewRequester(bringIntoViewRequester)
                         .onFocusChanged { if (it.isFocused) lastFocusedField = 0 },
                     placeholder = {
                         Text(
@@ -271,26 +307,44 @@ fun NoteAddAndEditContent(
             }
 
             item(span = StaggeredGridItemSpan.FullLine) {
-                TextField(
+                val interactionSource = remember { MutableInteractionSource() }
+                BasicTextField(
                     value = contentValue,
                     onValueChange = { onTextValueChange(contentValue, it, onContentValueChange) },
                     modifier = Modifier.fillMaxWidth()
+                        .bringIntoViewRequester(bringIntoViewRequester)
                         .onFocusChanged { if (it.isFocused) lastFocusedField = 1 },
-                    placeholder = {
-                        Text(
-                            "Note content...",
-                            style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.outline)
-                        )
-                    },
+                    onTextLayout = { textLayoutResult = it },
                     visualTransformation = contentTransformation,
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                    ),
-                    textStyle = MaterialTheme.typography.bodyLarge
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    decorationBox = { innerTextField ->
+                        TextFieldDefaults.DecorationBox(
+                            value = contentValue.text,
+                            innerTextField = innerTextField,
+                            enabled = true,
+                            singleLine = false,
+                            visualTransformation = contentTransformation,
+                            interactionSource = interactionSource,
+                            placeholder = {
+                                Text(
+                                    "Note content...",
+                                    style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.outline)
+                                )
+                            },
+                            colors = TextFieldDefaults.colors(
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                            ),
+                            contentPadding = TextFieldDefaults.contentPaddingWithoutLabel(0.dp, 0.dp, 0.dp, 0.dp)
+                        )
+                    }
                 )
+            }
+            item(span = StaggeredGridItemSpan.FullLine) {
+                Spacer(Modifier.size(15.dp))
             }
         }
     }
