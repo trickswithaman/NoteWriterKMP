@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -341,6 +342,9 @@ fun NoteAddAndEditContent(
                         )
                     }
                 )
+            }
+            item(span = StaggeredGridItemSpan.FullLine) {
+                Spacer(Modifier.size(15.dp))
             }
         }
     }

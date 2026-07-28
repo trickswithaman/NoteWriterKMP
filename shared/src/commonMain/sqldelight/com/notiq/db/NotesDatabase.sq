@@ -35,6 +35,9 @@ VALUES (?, ?, ?,?, ?, ?, ?);
 deleteNote:
 DELETE FROM NoteEntity WHERE id = ?;
 
+deleteAllNotes:
+DELETE FROM NoteEntity;
+
 updateNote:
 UPDATE NoteEntity
 SET title = ?, imagePath = ?, content = ?, isPinned = ?, updatedAt = ?

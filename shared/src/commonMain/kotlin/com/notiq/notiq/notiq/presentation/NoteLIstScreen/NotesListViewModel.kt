@@ -6,6 +6,7 @@ import com.notiq.db.NoteEntity
 import com.notiq.db.NoteImageEntity
 import com.notiq.notiq.domain.model.NoteWithImages
 import com.notiq.notiq.domain.usecase.AddNoteUseCase
+import com.notiq.notiq.domain.usecase.DeleteAllNotesUseCase
 import com.notiq.notiq.domain.usecase.DeleteNoteUseCase
 import com.notiq.notiq.domain.usecase.GetNotesUseCase
 import com.notiq.notiq.domain.usecase.UpdateNoteUseCase
@@ -27,6 +28,7 @@ class NotesListViewModel(
     private val getNotes: GetNotesUseCase,
     private val addNoteUseCase: AddNoteUseCase,
     private val deleteNoteUseCase: DeleteNoteUseCase,
+    private val deleteAllNotesUseCase: DeleteAllNotesUseCase,
     private val updateNoteUseCase: UpdateNoteUseCase
 ) : ViewModel() {
 
@@ -166,6 +168,13 @@ class NotesListViewModel(
     fun deleteNote(id: String) {
         viewModelScope.launch {
             deleteNoteUseCase(id)
+            loadNotes()
+        }
+    }
+
+    fun deleteAllNotes() {
+        viewModelScope.launch {
+            deleteAllNotesUseCase()
             loadNotes()
         }
     }

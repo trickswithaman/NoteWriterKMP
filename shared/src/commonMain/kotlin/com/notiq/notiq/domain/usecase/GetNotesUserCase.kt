@@ -51,3 +51,7 @@ class UpdateNoteUseCase(private val repo: NotesRepository){
 class DeleteNoteUseCase(private val repo: NotesRepository) {
     suspend operator fun invoke(id: String) = repo.deleteNote(id)
 }
+
+class DeleteAllNotesUseCase(private val repo: NotesRepository) {
+    suspend operator fun invoke() = repo.deleteAllNotes()
+}

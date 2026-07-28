@@ -5,6 +5,7 @@ import com.notiq.notiq.data.repository.NotesRepositoryImpl
 import com.notiq.notiq.domain.repository.NotesRepository
 import com.notiq.notiq.domain.repository.SettingsRepository
 import com.notiq.notiq.domain.usecase.AddNoteUseCase
+import com.notiq.notiq.domain.usecase.DeleteAllNotesUseCase
 import com.notiq.notiq.domain.usecase.DeleteNoteUseCase
 import com.notiq.notiq.domain.usecase.GetNotesUseCase
 import com.notiq.notiq.domain.usecase.UpdateNoteUseCase
@@ -32,6 +33,7 @@ val appModule = module {
     factory { GetNotesUseCase(get()) }
     factory { AddNoteUseCase(get()) }
     factory { DeleteNoteUseCase(get()) }
+    factory { DeleteAllNotesUseCase(get()) }
     factory { UpdateNoteUseCase(get()) }
 
     factory {
@@ -39,6 +41,7 @@ val appModule = module {
             getNotes = get(),
             addNoteUseCase = get(),
             deleteNoteUseCase = get(),
+            deleteAllNotesUseCase = get(),
             updateNoteUseCase = get()
         )
     }
