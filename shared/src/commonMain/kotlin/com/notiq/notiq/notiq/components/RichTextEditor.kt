@@ -20,7 +20,8 @@ import com.notiq.notiq.notiq.util.RichTextState
 fun RichTextEditor(
     state: RichTextState,
     modifier: Modifier = Modifier,
-    placeholder: String = ""
+    placeholder: String = "",
+    onTextLayout: (androidx.compose.ui.text.TextLayoutResult) -> Unit = {}
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     
@@ -28,6 +29,7 @@ fun RichTextEditor(
         value = state.value,
         onValueChange = { state.updateValue(it) },
         modifier = modifier,
+        onTextLayout = onTextLayout,
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         decorationBox = { innerTextField ->

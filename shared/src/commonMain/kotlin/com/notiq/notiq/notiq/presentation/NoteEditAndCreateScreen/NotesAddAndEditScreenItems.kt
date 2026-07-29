@@ -55,12 +55,28 @@ fun NoteAddAndEditContent(
     onBack: () -> Unit
 ) {
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     var lastFocusedField by remember { mutableStateOf(-1) }
 
     val density = LocalDensity.current
     val imeInsets = WindowInsets.ime
     val isKeyboardVisible by remember {
         derivedStateOf { imeInsets.getBottom(density) > 0 }
+    }
+
+    LaunchedEffect(contentState.value.selection, contentState.value.text, textLayoutResult, lastFocusedField) {
+        val layoutResult = textLayoutResult
+        val selection = contentState.value.selection
+        if (lastFocusedField == 1 && layoutResult != null && selection.collapsed) {
+            val cursorOffset = selection.start
+            if (cursorOffset <= layoutResult.layoutInput.text.length) {
+                val cursorRect = layoutResult.getCursorRect(cursorOffset)
+                // Adding a small buffer to the cursor rect to ensure it's comfortably in view
+                runCatching {
+                    bringIntoViewRequester.bringIntoView(cursorRect.copy(bottom = cursorRect.bottom + 20f))
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -166,6 +182,7 @@ fun NoteAddAndEditContent(
                     modifier = Modifier.fillMaxWidth()
                         .bringIntoViewRequester(bringIntoViewRequester)
                         .onFocusChanged { if (it.isFocused) lastFocusedField = 1 },
+                    onTextLayout = { textLayoutResult = it },
                     placeholder = "Note content..."
                 )
             }
