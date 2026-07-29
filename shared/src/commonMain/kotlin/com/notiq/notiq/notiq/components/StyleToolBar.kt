@@ -3,75 +3,55 @@ package com.notiq.notiq.notiq.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FormatBold
-import androidx.compose.material.icons.filled.FormatColorText
-import androidx.compose.material.icons.filled.FormatItalic
-import androidx.compose.material.icons.filled.FormatUnderlined
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Photo
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.notiq.notiq.notiq.ui.theme.Surface
-import com.notiq.notiq.notiq.util.boldRegex
-import com.notiq.notiq.notiq.util.colorRegex
-import com.notiq.notiq.notiq.util.getMarkdownMetadata
-import com.notiq.notiq.notiq.util.italicRegex
-import com.notiq.notiq.notiq.util.underlineRegex
+import com.notiq.notiq.notiq.util.*
 
-
+/**
+ * Proper Compose Style Toolbar
+ */
 @Composable
 fun StyleToolbar(
     modifier: Modifier = Modifier,
     isKeyboardVisible: Boolean,
     lastFocusedField: Int,
-    titleValue: TextFieldValue,
-    contentValue: TextFieldValue,
+    titleState: RichTextState,
+    contentState: RichTextState,
     onGalleryClick: () -> Unit,
-    onCameraClick: () -> Unit,
-    onTitleValueChange: (TextFieldValue) -> Unit,
-    onContentValueChange: (TextFieldValue) -> Unit
+    onCameraClick: () -> Unit
 ) {
-    //   if (!isKeyboardVisible) return
-
     var showColorPicker by remember { mutableStateOf(false) }
+    var showImageBottomSheet by remember { mutableStateOf(false) }
+
+    val isEnabled = lastFocusedField != -1
+    val currentState = if (lastFocusedField == 0) titleState else if (lastFocusedField == 1) contentState else null
+    val activeColor = currentState?.getActiveColor() ?: Color.Unspecified
+
+    val styleActions = remember {
+        listOf(
+            ComposeStyleAction(Icons.Default.FormatBold, BoldStyle, "Bold"),
+            ComposeStyleAction(Icons.Default.FormatItalic, ItalicStyle, "Italic"),
+            ComposeStyleAction(Icons.Default.FormatUnderlined, UnderlineStyle, "Underline")
+        )
+    }
 
     val availableColors = remember {
         listOf(
@@ -79,115 +59,132 @@ fun StyleToolbar(
             "#FFA500", "#800080", "#A52A2A", "#808080", "#FFFFFF"
         )
     }
-    var showImageBottomSheet by remember { mutableStateOf(false) }
-
-
-    val isEnabled = lastFocusedField != -1
-    val currentVal = if (lastFocusedField == 0) titleValue else if (lastFocusedField == 1) contentValue else TextFieldValue("")
-    val onValChange = if (lastFocusedField == 0) onTitleValueChange else if (lastFocusedField == 1) onContentValueChange else { _ -> }
 
     Surface(
         modifier = modifier.fillMaxWidth().imePadding(),
         tonalElevation = 2.dp,
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
-        Column(modifier = Modifier.alpha(if (isEnabled) 1f else 0.5f)) {
-            if (isEnabled && showColorPicker) {
+        Column(modifier = Modifier.padding(bottom = if (!isKeyboardVisible) 15.dp else 0.dp)) {
+            if (isEnabled && showColorPicker && currentState != null) {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth().padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    item {
+                        IconButton(
+                            onClick = {
+                                currentState.removeColorStyle()
+                                showColorPicker = false
+                            },
+                            modifier = Modifier
+                                .size(34.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), CircleShape)
+                        ) {
+                            Icon(Icons.Default.FormatColorReset, contentDescription = "Clear Color", modifier = Modifier.size(20.dp))
+                        }
+                    }
+
                     items(availableColors) { hex ->
-                        val color = try {
+                        val colorValue = try {
                             Color(0xFF000000 or hex.removePrefix("#").toLong(16))
                         } catch (e: Exception) {
                             Color.Gray
                         }
+                        val isSelected = activeColor == colorValue
+                        
                         Box(
+                            contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .size(30.dp)
-                                .background(color, CircleShape)
-                                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                                .clickable {
-                                    val newValue = toggleStyle(currentVal, "<color=$hex>", "</color>")
-                                    onValChange(newValue)
-                                    showColorPicker = false
-                                }
-                        )
+                                .size(34.dp)
+                                .background(Color.Transparent, CircleShape)
+                                .border(
+                                    width = if (isSelected) 3.dp else 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                    shape = CircleShape
+                                )
+                                .padding(if (isSelected) 4.dp else 2.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(colorValue, CircleShape)
+                                    .clickable {
+                                        currentState.toggleStyle(SpanStyle(color = colorValue))
+                                    }
+                            )
+                            if (isSelected) {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = if (colorValue == Color.White || hex == "#FFFFFF") Color.Black else Color.White
+                                )
+                            }
+                        }
                     }
                 }
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp), thickness = 0.5.dp)
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
-            )
-            {
-                val icons = remember {
-                    listOf(
-                        Icons.Default.FormatBold,
-                        Icons.Default.FormatItalic,
-                        Icons.Default.FormatUnderlined,
-                        Icons.Outlined.Photo,
-                        Icons.Default.FormatColorText,
-                        Icons.Outlined.Mic
-                    )
-                }
-
-                val activeStyles = remember(currentVal) {
-                    listOf(
-                        isStyleActive(currentVal, "**"),
-                        isStyleActive(currentVal, "_"),
-                        isStyleActive(currentVal, "<u>"),
-                        false, // Photo
-                        isStyleActive(currentVal, "<color="), // FormatColorText
-                        false // Mic
-                    )
-                }
-
-                icons.forEachIndexed { index, icon ->
-                    val isSelected = if (index < activeStyles.size) activeStyles[index] else false
-
+            ) {
+                styleActions.forEach { action ->
+                    val isActive = currentState?.isStyleActive(action.style) ?: false
                     IconButton(
                         enabled = isEnabled,
-                        onClick = {
-                            when (index) {
-                                0 -> onValChange(toggleStyle(currentVal, "**", "**"))
-                                1 -> onValChange(toggleStyle(currentVal, "_", "_"))
-                                2 -> onValChange(toggleStyle(currentVal, "<u>", "</u>"))
-                                3 -> {
-                                    showImageBottomSheet = true
-                                }
-                                4 -> {
-                                    if (isSelected) {
-                                        val match = colorRegex.findAll(currentVal.text).find {
-                                            currentVal.selection.min >= it.range.first && currentVal.selection.max <= it.range.last + 1
-                                        }
-                                        if (match != null) {
-                                            val colorHex = match.groupValues[1]
-                                            onValChange(toggleStyle(currentVal, "<color=$colorHex>", "</color>"))
-                                        } else {
-                                            showColorPicker = !showColorPicker
-                                        }
-                                    } else {
-                                        showColorPicker = !showColorPicker
-                                    }
-                                }
-                                else -> {}
-                            }
-                        },
+                        onClick = { currentState?.toggleStyle(action.style) },
                         colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                            contentColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
                         )
                     ) {
-                        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(22.dp))
+                        Icon(action.icon, contentDescription = action.description, modifier = Modifier.size(22.dp))
                     }
                 }
+
+                IconButton(
+                    enabled = isEnabled,
+                    onClick = { showImageBottomSheet = true },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                ) {
+                    Icon(Icons.Outlined.Photo, contentDescription = "Add Image", modifier = Modifier.size(22.dp))
+                }
+
+                val isAnyColorActive = activeColor != Color.Unspecified
+                IconButton(
+                    enabled = isEnabled,
+                    onClick = { showColorPicker = !showColorPicker },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = if (isAnyColorActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        containerColor = if (showColorPicker || isAnyColorActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = if (showColorPicker) 1f else 0.5f) else Color.Transparent
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.FormatColorText, 
+                        contentDescription = "Color", 
+                        modifier = Modifier.size(22.dp),
+                        tint = if (isAnyColorActive) activeColor else LocalContentColor.current
+                    )
+                }
+
+                IconButton(
+                    enabled = isEnabled,
+                    onClick = { /* Mic Logic */ },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                ) {
+                    Icon(Icons.Outlined.Mic, contentDescription = "Voice Note", modifier = Modifier.size(22.dp))
+                }
             }
+
             if (showImageBottomSheet) {
                 ImageBottomSheet(
                     onCameraClick = {
@@ -203,10 +200,15 @@ fun StyleToolbar(
                     }
                 )
             }
-            if (!isKeyboardVisible) Spacer(Modifier.height(15.dp))
         }
     }
 }
+
+data class ComposeStyleAction(
+    val icon: ImageVector,
+    val style: SpanStyle,
+    val description: String
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -263,92 +265,5 @@ class MarkdownVisualTransformation : VisualTransformation {
         lastText = original
         lastResult = result
         return result
-    }
-}
-
-private fun isStyleActive(value: TextFieldValue, prefix: String): Boolean {
-    val text = value.text
-    val selection = value.selection
-    if (text.isEmpty()) return false
-
-    val (regex, openingLen, closingLen) = when {
-        prefix == "**" -> Triple(boldRegex, 2, 2)
-        prefix == "_" -> Triple(italicRegex, 1, 1)
-        prefix == "<u>" -> Triple(underlineRegex, 3, 4)
-        prefix.startsWith("<color=") -> Triple(colorRegex, -1, 8)
-        else -> return false
-    }
-
-    return regex.findAll(text).any { match ->
-        val actualOpeningLen = if (openingLen == -1) {
-            match.groupValues[1].length + 8
-        } else openingLen
-
-        val contentStart = match.range.first + actualOpeningLen
-        val contentEnd = match.range.last + 1 - closingLen
-
-        if (selection.collapsed) {
-            // Check if cursor is strictly inside the content or at its boundaries
-            selection.start in contentStart..contentEnd
-        } else {
-            // Check if selection is fully contained within the content
-            selection.min >= contentStart && selection.max <= contentEnd
-        }
-    }
-}
-
-private fun toggleStyle(value: TextFieldValue, prefix: String, suffix: String): TextFieldValue {
-    val text = value.text
-    val selection = value.selection
-    val start = selection.min
-    val end = selection.max
-
-    val (regex, openingLen, closingLen) = when {
-        prefix == "**" -> Triple(boldRegex, 2, 2)
-        prefix == "_" -> Triple(italicRegex, 1, 1)
-        prefix == "<u>" -> Triple(underlineRegex, 3, 4)
-        prefix.startsWith("<color=") -> Triple(colorRegex, -1, 8)
-        else -> return value
-    }
-
-    val match = regex.findAll(text).find { m ->
-        val actualOpeningLen = if (openingLen == -1) m.groupValues[1].length + 8 else openingLen
-        val contentStart = m.range.first + actualOpeningLen
-        val contentEnd = m.range.last + 1 - closingLen
-
-        if (selection.collapsed) {
-            start in contentStart..contentEnd
-        } else {
-            start >= contentStart && end <= contentEnd
-        }
-    }
-
-    if (match != null) {
-        val actualOpeningLen = if (openingLen == -1) match.groupValues[1].length + 8 else openingLen
-
-        // If it's a color tag and the color is different, replace the tag instead of unwrapping
-        if (regex == colorRegex && !match.value.startsWith(prefix)) {
-            val unwrapped = match.value.substring(actualOpeningLen, match.value.length - closingLen)
-            val wrapped = prefix + unwrapped + suffix
-            val newText = text.replaceRange(match.range.first, match.range.last + 1, wrapped)
-            val diff = prefix.length - actualOpeningLen
-            return value.copy(
-                text = newText,
-                selection = TextRange(start + diff, end + diff)
-            )
-        }
-
-        val unwrapped = match.value.substring(actualOpeningLen, match.value.length - closingLen)
-        val newText = text.replaceRange(match.range.first, match.range.last + 1, unwrapped)
-        val newStart = (start - actualOpeningLen).coerceIn(match.range.first, match.range.first + unwrapped.length)
-        val newEnd = (end - actualOpeningLen).coerceIn(match.range.first, match.range.first + unwrapped.length)
-        return value.copy(text = newText, selection = TextRange(newStart, newEnd))
-    } else {
-        val selectionText = text.substring(start, end)
-        val wrapped = prefix + selectionText + suffix
-        return value.copy(
-            text = text.replaceRange(start, end, wrapped),
-            selection = TextRange(start + prefix.length, start + prefix.length + selectionText.length)
-        )
     }
 }
