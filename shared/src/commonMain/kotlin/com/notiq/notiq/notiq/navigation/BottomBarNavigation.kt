@@ -1,61 +1,32 @@
 package com.notiq.notiq.notiq.navigation
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color.Companion.Gray
-import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.notiq.db.NoteEntity
 import com.notiq.notiq.domain.model.NoteWithImages
-import com.notiq.notiq.domain.model.getButtonbarItems
 import com.notiq.notiq.notiq.components.ModernBottomBar
 import com.notiq.notiq.notiq.components.NormalTopBar
 import com.notiq.notiq.notiq.components.TopSearchBar
@@ -64,13 +35,8 @@ import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListScreen
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
 import com.notiq.notiq.notiq.presentation.SearchScreen.SearchScreen
 import com.notiq.notiq.notiq.presentation.SettingScreen.SettingScreen
-import com.notiq.notiq.notiq.ui.theme.Red
-import io.github.ismoy.imagepickerkmp.domain.config.GalleryConfig
 import io.github.ismoy.imagepickerkmp.domain.extensions.loadPainter
 import io.github.ismoy.imagepickerkmp.domain.models.PhotoResult
-import io.github.ismoy.imagepickerkmp.features.imagepicker.config.ImagePickerKMPConfig
-import io.github.ismoy.imagepickerkmp.features.imagepicker.model.ImagePickerResult
-import io.github.ismoy.imagepickerkmp.features.imagepicker.ui.rememberImagePickerKMP
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,12 +81,10 @@ fun BottomNavigation(
                 }
                 composable(route = Screen.SearchScreen.route) {
                     SearchScreen(
-                        viewModel = viewModel,
-                        onNoteClick = { note -> onNoteSelected(note) }
-                    )
+                        viewModel = viewModel, onNoteClick = { note -> onNoteSelected(note) })
                 }
                 composable(route = Screen.AiAssistant.route) {
-                    Text("dfdfd")
+                    Text("AI Assistant coming soon...")
                 }
                 composable(route = Screen.Setting.route) {
                     SettingScreen()
@@ -134,8 +98,7 @@ fun BottomNavigation(
 fun PhotoItem(photo: PhotoResult, modifier: Modifier = Modifier) {
     val painter = photo.loadPainter()
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp)
+        modifier = modifier, shape = RoundedCornerShape(12.dp)
     ) {
         if (painter != null) {
             Image(
@@ -146,8 +109,7 @@ fun PhotoItem(photo: PhotoResult, modifier: Modifier = Modifier) {
             )
         } else {
             Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
             }

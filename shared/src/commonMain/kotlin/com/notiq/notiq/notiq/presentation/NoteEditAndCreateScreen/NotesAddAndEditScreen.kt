@@ -1,72 +1,30 @@
 package com.notiq.notiq.notiq.presentation.NoteEditAndCreateScreen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.FormatBold
-import androidx.compose.material.icons.filled.FormatColorText
-import androidx.compose.material.icons.filled.FormatItalic
-import androidx.compose.material.icons.filled.FormatUnderlined
-import androidx.compose.material.icons.outlined.Mic
-import androidx.compose.material.icons.outlined.Photo
-import androidx.compose.material.icons.outlined.PushPin
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
-import com.notiq.db.NoteEntity
 import com.notiq.notiq.domain.model.NoteWithImages
-import com.notiq.notiq.notiq.components.MarkdownVisualTransformation
-import com.notiq.notiq.notiq.components.StyleToolbar
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
-import com.notiq.notiq.notiq.util.boldRegex
-import com.notiq.notiq.notiq.util.cleanEmptyTags
-import com.notiq.notiq.notiq.util.colorRegex
-import com.notiq.notiq.notiq.util.getMarkdownMetadata
-import com.notiq.notiq.notiq.util.italicRegex
-import com.notiq.notiq.notiq.util.underlineRegex
+import com.notiq.notiq.notiq.util.RichTextState
 import io.github.ismoy.imagepickerkmp.features.imagepicker.model.ImagePickerResult
 import io.github.ismoy.imagepickerkmp.features.imagepicker.ui.rememberImagePickerKMP
 import kotlinx.coroutines.delay
 
-
+/**
+ * NEW Proper Compose implementation
+ */
 @Composable
 fun NoteAddAndEditScreen(
-    noteWithImages: NoteWithImages?, viewModel: NotesListViewModel, onBack: () -> Unit
+    noteWithImages: NoteWithImages?, 
+    viewModel: NotesListViewModel, 
+    onBack: () -> Unit
 ) {
     var currentNoteWithImages by remember(noteWithImages?.note?.id) { mutableStateOf(noteWithImages) }
     
-    var titleValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(noteWithImages?.note?.title ?: ""))
-    }
-    var contentValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(noteWithImages?.note?.content ?: ""))
-    }
+    val titleState = remember { RichTextState() }
+    val contentState = remember { RichTextState() }
+    
     var isPinned by remember { mutableStateOf(noteWithImages?.note?.isPinned ?: false) }
-
-    // Now we manage the list of image URIs directly from the NoteWithImages relational model.
     var imagePaths by remember(noteWithImages?.note?.id) {
         mutableStateOf(noteWithImages?.images?.map { it.uri } ?: emptyList())
     }
@@ -83,43 +41,43 @@ fun NoteAddAndEditScreen(
         }
     }
 
-    LaunchedEffect(noteWithImages) {
-        if (noteWithImages != null) {
+    // Use a flag to ensure we only load from Markdown once per note ID
+    var lastLoadedNoteId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(noteWithImages?.note?.id) {
+        val note = noteWithImages?.note ?: return@LaunchedEffect
+        if (note.id != lastLoadedNoteId) {
+            lastLoadedNoteId = note.id
             currentNoteWithImages = noteWithImages
-            if (titleValue.text.isEmpty() && contentValue.text.isEmpty()) {
-                titleValue = TextFieldValue(noteWithImages.note.title ?: "")
-                contentValue = TextFieldValue(noteWithImages.note.content ?: "")
-                isPinned = noteWithImages.note.isPinned
-                imagePaths = noteWithImages.images.map { it.uri }
-            }
+            titleState.fromMarkdown(note.title ?: "")
+            contentState.fromMarkdown(note.content ?: "")
+            isPinned = note.isPinned
+            imagePaths = noteWithImages.images.map { it.uri }
         }
     }
 
-    LaunchedEffect(titleValue.text, contentValue.text, isPinned, imagePaths) {
-        val hasChanged = titleValue.text != (currentNoteWithImages?.note?.title ?: "") ||
-                contentValue.text != (currentNoteWithImages?.note?.content ?: "") ||
+    LaunchedEffect(titleState.value.text, contentState.value.text, isPinned, imagePaths) {
+        // Skip auto-save if we haven't loaded the note yet or if it's currently loading
+        if (noteWithImages != null && lastLoadedNoteId != noteWithImages.note.id) return@LaunchedEffect
+
+        val currentTitleMarkdown = titleState.toMarkdown()
+        val currentContentMarkdown = contentState.toMarkdown()
+        
+        val hasChanged = currentTitleMarkdown != (currentNoteWithImages?.note?.title ?: "") ||
+                currentContentMarkdown != (currentNoteWithImages?.note?.content ?: "") ||
                 isPinned != (currentNoteWithImages?.note?.isPinned ?: false) ||
                 imagePaths != (currentNoteWithImages?.images?.map { it.uri } ?: emptyList<String>())
 
         if (!hasChanged) return@LaunchedEffect
 
-        // Don't create a new note if it's completely blank
-        if (currentNoteWithImages == null && titleValue.text.isBlank() && contentValue.text.isBlank() && imagePaths.isEmpty()) return@LaunchedEffect
+        if (currentNoteWithImages == null && titleState.value.text.isBlank() && contentState.value.text.isBlank() && imagePaths.isEmpty()) return@LaunchedEffect
 
-        // Delay to avoid excessive DB writes during typing
-        val isTextChange = titleValue.text != (currentNoteWithImages?.note?.title ?: "") || 
-                           contentValue.text != (currentNoteWithImages?.note?.content ?: "")
-        if (isTextChange) {
-            delay(500L)
-        }
+        delay(500L)
         
-        val cleanTitle = com.notiq.notiq.notiq.util.cleanEmptyTags(titleValue.text)
-        val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
-
         viewModel.saveNote(
             existingNoteId = currentNoteWithImages?.note?.id,
-            title = cleanTitle,
-            content = cleanContent,
+            title = currentTitleMarkdown,
+            content = currentContentMarkdown,
             imageUris = imagePaths,
             isPinned = isPinned,
             onSuccess = { savedNote ->
@@ -129,42 +87,24 @@ fun NoteAddAndEditScreen(
     }
 
     val handleBack = {
-        val cleanTitle = com.notiq.notiq.notiq.util.cleanEmptyTags(titleValue.text)
-        val cleanContent = com.notiq.notiq.notiq.util.cleanEmptyTags(contentValue.text)
-        
-        val finalImagePaths = if (pickerResult is ImagePickerResult.Success) {
-            (imagePaths + pickerResult.photos.map { it.uri }).distinct()
-        } else {
-            imagePaths
-        }
-
-        val hasChanged = cleanTitle != (currentNoteWithImages?.note?.title ?: "") ||
-                cleanContent != (currentNoteWithImages?.note?.content ?: "") ||
-                isPinned != (currentNoteWithImages?.note?.isPinned ?: false) ||
-                finalImagePaths != (currentNoteWithImages?.images?.map { it.uri } ?: emptyList<String>())
-
-        if (hasChanged) {
-            viewModel.saveNote(
-                existingNoteId = currentNoteWithImages?.note?.id,
-                title = cleanTitle,
-                content = cleanContent,
-                imageUris = finalImagePaths,
-                isPinned = isPinned
-            )
-        }
+        viewModel.saveNote(
+            existingNoteId = currentNoteWithImages?.note?.id,
+            title = titleState.toMarkdown(),
+            content = contentState.toMarkdown(),
+            imageUris = imagePaths,
+            isPinned = isPinned
+        )
         onBack()
     }
 
     NoteAddAndEditContent(
         isPinned = isPinned,
         onTogglePin = { isPinned = !isPinned },
-        titleValue = titleValue,
+        titleState = titleState,
+        contentState = contentState,
         imagePaths = imagePaths,
         picker = picker,
         onImagePathsChange = { imagePaths = it },
-        onTitleValueChange = { titleValue = it },
-        contentValue = contentValue,
-        onContentValueChange = { contentValue = it },
         onBack = handleBack
     )
 }
