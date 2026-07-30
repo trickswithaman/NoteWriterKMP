@@ -81,8 +81,15 @@ fun StyleToolbar(
                             modifier = Modifier
                                 .size(34.dp)
                                 .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), CircleShape)
+                                .padding(8.dp)
+
                         ) {
-                            Icon(Icons.Default.FormatColorReset, contentDescription = "Clear Color", modifier = Modifier.size(20.dp))
+                            Icon(
+                                Icons.Default.FormatColorReset,
+                                contentDescription = "Clear Color",
+                                modifier = Modifier.size(20.dp)
+
+                            )
                         }
                     }
 
@@ -93,7 +100,7 @@ fun StyleToolbar(
                             Color.Gray
                         }
                         val isSelected = activeColor == colorValue
-                        
+
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
@@ -167,8 +174,8 @@ fun StyleToolbar(
                     )
                 ) {
                     Icon(
-                        Icons.Default.FormatColorText, 
-                        contentDescription = "Color", 
+                        Icons.Default.FormatColorText,
+                        contentDescription = "Color",
                         modifier = Modifier.size(22.dp),
                         tint = if (isAnyColorActive) activeColor else LocalContentColor.current
                     )
@@ -244,26 +251,3 @@ fun ImageBottomSheet(
     }
 }
 
-class MarkdownVisualTransformation : VisualTransformation {
-    private var lastText: String? = null
-    private var lastResult: TransformedText? = null
-
-    override fun filter(text: AnnotatedString): TransformedText {
-        val original = text.text
-        if (original == lastText && lastResult != null) return lastResult!!
-
-        val metadata = getMarkdownMetadata(original)
-
-        val mapping = object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int =
-                metadata.originalToTransformed[offset.coerceIn(0, original.length)]
-            override fun transformedToOriginal(offset: Int): Int =
-                metadata.transformedToOriginal[offset.coerceIn(0, metadata.annotatedString.length)]
-        }
-
-        val result = TransformedText(metadata.annotatedString, mapping)
-        lastText = original
-        lastResult = result
-        return result
-    }
-}

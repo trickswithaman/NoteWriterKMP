@@ -155,6 +155,7 @@ fun NoteAddAndEditContent(
 
             // Title Editor
             item(span = StaggeredGridItemSpan.FullLine) {
+
                 TextField(
                     value = titleState.value,
                     onValueChange = { titleState.updateValue(it) },
@@ -171,7 +172,7 @@ fun NoteAddAndEditContent(
                         unfocusedIndicatorColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent,
                     ),
-                    textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
+                    textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal)
                 )
             }
 
@@ -180,10 +181,12 @@ fun NoteAddAndEditContent(
                 RichTextEditor(
                     state = contentState,
                     modifier = Modifier.fillMaxWidth()
+                        .padding(horizontal = 15.dp)
                         .bringIntoViewRequester(bringIntoViewRequester)
                         .onFocusChanged { if (it.isFocused) lastFocusedField = 1 },
                     onTextLayout = { textLayoutResult = it },
-                    placeholder = "Note content..."
+                    placeholder = "Note content...",
+                    imeAction = ImeAction.Default
                 )
             }
             

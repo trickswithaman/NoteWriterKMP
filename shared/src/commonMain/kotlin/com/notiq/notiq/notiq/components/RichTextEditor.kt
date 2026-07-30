@@ -2,6 +2,7 @@ package com.notiq.notiq.notiq.components
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -11,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.notiq.notiq.notiq.util.RichTextState
@@ -21,15 +23,17 @@ fun RichTextEditor(
     state: RichTextState,
     modifier: Modifier = Modifier,
     placeholder: String = "",
+    imeAction: ImeAction = ImeAction.Done,
     onTextLayout: (androidx.compose.ui.text.TextLayoutResult) -> Unit = {}
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    
+
     BasicTextField(
         value = state.value,
         onValueChange = { state.updateValue(it) },
         modifier = modifier,
         onTextLayout = onTextLayout,
+        keyboardOptions = KeyboardOptions(imeAction = imeAction),
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         decorationBox = { innerTextField ->
