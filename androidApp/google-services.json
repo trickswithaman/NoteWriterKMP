@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "269068614435",
+    "project_id": "notiq-9bf13",
+    "storage_bucket": "notiq-9bf13.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:269068614435:android:2d0b47cb3dd7a188406a96",
+        "android_client_info": {
+          "package_name": "com.notiq"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "269068614435-qdg5v84eln11fpuq4mpdsv7b3me0qesa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.notiq",
+            "certificate_hash": "bdc9907335b3125d3f22ec9e0383ae7bb6490abb"
+          }
+        },
+        {
+          "client_id": "269068614435-kt8t4o16sb69f04o6jlauhtdivsb01q8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqcWwLme-jjh9n4CwnBnevrhQRfcs-ICk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "269068614435-kt8t4o16sb69f04o6jlauhtdivsb01q8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "269068614435-ivvnpv151ibnif4ptqddgjbrbem7nsfq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "notiq.NoteWriterKMP"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

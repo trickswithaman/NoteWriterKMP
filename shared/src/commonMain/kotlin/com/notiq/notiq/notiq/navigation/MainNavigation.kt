@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.savedstate.read
+import com.notiq.notiq.domain.auth.GoogleAuthProvider
 import com.notiq.notiq.domain.model.NoteWithImages
 import com.notiq.notiq.notiq.navigation.Screens.Screen
 import com.notiq.notiq.notiq.util.UiState
@@ -22,7 +23,8 @@ import com.notiq.notiq.notiq.presentation.SplashScreen.SplashScreen
 
 @Composable
 fun MainNavigation(
-    viewModel: NotesListViewModel
+    viewModel: NotesListViewModel,
+    googleAuthUiClient : GoogleAuthProvider
 ) {
     val notesState by viewModel.notes.collectAsStateWithLifecycle()
     val notes = if (notesState is UiState.Success) (notesState as UiState.Success).data else emptyList()
@@ -30,7 +32,11 @@ fun MainNavigation(
     MainNavigationContent(notes = notes, splashScreen = { onNavigate ->
         SplashScreen(navigateTO = onNavigate)
     }, dashboardScreen = { onNoteSelected ->
-        BottomNavigation(viewModel, onNoteSelected = onNoteSelected)
+        BottomNavigation(
+            GoogleAuthUiClient = googleAuthUiClient,
+            viewModel = viewModel,
+            onNoteSelected = onNoteSelected
+        )
     }, noteListScreen = { onEdit ->
         NotesListScreen(viewModel = viewModel, onEdit = onEdit)
     }, addNoteScreen = { onBack ->

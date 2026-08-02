@@ -83,6 +83,7 @@ fun SettingScreen() {
                     .padding(horizontal = 24.dp)
                     .padding(bottom = 40.dp)
             ) {
+
                 Text(
                     text = "Appearance",
                     style = MaterialTheme.typography.headlineSmall,

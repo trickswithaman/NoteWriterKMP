@@ -43,7 +43,10 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
+            implementation(libs.googleid)
             implementation(libs.sqldelight.android.driver)
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -94,6 +97,9 @@ kotlin {
             implementation(compose.materialIconsExtended)
 
             implementation("io.github.ismoy:imagepickerkmp:1.0.43")
+
+            // Firebase Auth KMP
+            implementation(libs.firebase.auth.kmp)
         }
         
         val iosMain by creating {

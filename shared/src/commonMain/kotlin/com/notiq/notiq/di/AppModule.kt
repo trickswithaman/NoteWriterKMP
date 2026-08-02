@@ -2,6 +2,7 @@ package com.notiq.notiq.di
 
 import com.notiq.notiq.data.local.database.NotesLocalDataSource
 import com.notiq.notiq.data.repository.NotesRepositoryImpl
+import com.notiq.notiq.domain.auth.GoogleAuthProvider
 import com.notiq.notiq.domain.repository.NotesRepository
 import com.notiq.notiq.domain.repository.SettingsRepository
 import com.notiq.notiq.domain.usecase.AddNoteUseCase
@@ -11,6 +12,7 @@ import com.notiq.notiq.domain.usecase.GetNotesUseCase
 import com.notiq.notiq.domain.usecase.UpdateNoteUseCase
 import com.notiq.notiq.notiq.presentation.NoteLIstScreen.NotesListViewModel
 import com.notiq.notiq.notiq.presentation.SettingScreen.SettingsViewModel
+import com.notiq.notiq.notiq.presentation.SignIn.SignInViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -28,6 +30,7 @@ val appModule = module {
         NotesRepositoryImpl(get())
     }
     singleOf(::SettingsRepository)
+    singleOf(::GoogleAuthProvider)
 
     // 🔹 Use Cases
     factory { GetNotesUseCase(get()) }
@@ -47,6 +50,7 @@ val appModule = module {
     }
 
     factoryOf(::SettingsViewModel)
+    factoryOf(::SignInViewModel)
 }
 
 expect val platformModule: Module
