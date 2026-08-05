@@ -1,0 +1,23 @@
+Calculating task graph as no cached configuration is available for tasks: :shared:tasks --all
+Type-safe project accessors is an incubating feature.
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/home/shubhamgupta/AndroidStudioProjects/NoteWriterKMP/shared/build.gradle.kts' line: 3
+
+* What went wrong:
+An exception occurred applying plugin request [id: 'com.android.kotlin.multiplatform.library', version: '9.0.1']
+> Failed to apply plugin 'com.android.internal.kotlin.multiplatform.library'.
+   > Failed to create service 'com.android.build.gradle.internal.services.AndroidLocationsBuildService_f9cc878f-c185-4e9e-b1c4-ed048aacc6ac'.
+      > Could not create an instance of type com.android.build.gradle.internal.services.AndroidLocationsBuildService.
+         > Could not create provider for value source AndroidLocationsBuildService.AndroidDirectoryCreator.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 4s
+Configuration cache entry stored.

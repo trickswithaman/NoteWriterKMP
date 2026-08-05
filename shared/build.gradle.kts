@@ -7,23 +7,28 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.sqldelight.plugin)
     alias(libs.plugins.kotlinSerialization)
+    kotlin("native.cocoapods")
 }
 
 kotlin {
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
+    iosArm64()
+    iosSimulatorArm64()
+
+    cocoapods {
+        version = "1.0"
+        summary = "Shared module for Notiq"
+        homepage = "https://github.com/shubhamgupta/NoteWriterKMP"
+        ios.deploymentTarget = "16.0"
+        pod("GoogleSignIn")
+        pod("FirebaseCore")
+        pod("FirebaseAuth")
+        framework {
             baseName = "Shared"
             isStatic = true
             linkerOpts("-lsqlite3")
         }
-        iosTarget.compilerOptions {
-            freeCompilerArgs.add("-Xoverride-konan-properties=apple.sdk.minVersion=18.2")
-        }
     }
-    
+
     androidLibrary {
        namespace = "com.notiq.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
