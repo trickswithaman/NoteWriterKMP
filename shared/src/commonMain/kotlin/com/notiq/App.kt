@@ -17,7 +17,11 @@ fun App() {
     val settingsViewModel = koinViewModel<SettingsViewModel>()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsStateWithLifecycle()
 
-
+    val darkTheme = when (selectedTheme) {
+        "Light" -> false
+        "Dark" -> true
+        else -> isSystemInDarkTheme()
+    }
 
     NoteWriterTheme(darkTheme = darkTheme) {
         val viewModel = koinViewModel<NotesListViewModel>()
