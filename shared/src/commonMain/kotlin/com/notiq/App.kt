@@ -23,6 +23,7 @@ fun App() {
         else -> isSystemInDarkTheme()
     }
 
+    "foujdsfufjdfjfidsji"
     "skjfhjfbdjfdkf"
     NoteWriterTheme(darkTheme = darkTheme) {
         val viewModel = koinViewModel<NotesListViewModel>()
