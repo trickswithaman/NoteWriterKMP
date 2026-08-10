@@ -93,26 +93,3 @@ fun BottomNavigation(
         }
     }
 }
-
-@Composable
-fun PhotoItem(photo: PhotoResult, modifier: Modifier = Modifier) {
-    val painter = photo.loadPainter()
-    Card(
-        modifier = modifier, shape = RoundedCornerShape(12.dp)
-    ) {
-        if (painter != null) {
-            Image(
-                painter = painter,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit
-            )
-        } else {
-            Box(
-                modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-    }
-}
