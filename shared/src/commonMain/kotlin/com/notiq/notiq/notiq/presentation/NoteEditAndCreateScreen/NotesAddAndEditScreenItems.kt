@@ -31,9 +31,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.notiq.notiq.notiq.components.PhotoItem
 import com.notiq.notiq.notiq.components.RichTextEditor
 import com.notiq.notiq.notiq.components.StyleToolbar
-import com.notiq.notiq.notiq.navigation.PhotoItem
 import com.notiq.notiq.notiq.util.RichTextState
 import com.notiq.notiq.notiq.util.getMarkdownMetadata
 import io.github.ismoy.imagepickerkmp.domain.models.PhotoResult
